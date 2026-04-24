@@ -34,7 +34,7 @@ function fmtDate(iso: string, opts?: Intl.DateTimeFormatOptions) {
 
 function statusConfig(status: PassStatus) {
   if (status === 'active')
-    return { dot: 'bg-emerald-500', text: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200', label: 'Active' };
+    return { dot: 'bg-brand', text: 'text-brand', bg: 'bg-brand-light border-brand-border', label: 'Active' };
   if (status === 'provisioned')
     return { dot: 'bg-gray-400', text: 'text-gray-600', bg: 'bg-gray-50 border-gray-200', label: 'Provisioned' };
   return { dot: 'bg-red-500', text: 'text-red-700', bg: 'bg-red-50 border-red-200', label: 'Expired' };
@@ -64,7 +64,7 @@ function CopyButton({ text }: { text: string }) {
     <button onClick={copy} title="Copy token"
       className="px-3 py-2 border-l border-gray-200 text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors rounded-r shrink-0">
       {copied ? (
-        <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 20 20" fill="currentColor">
+        <svg className="w-4 h-4 text-brand" viewBox="0 0 20 20" fill="currentColor">
           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 00-1.414 0L8 12.586 4.707 9.293a1 1 0 00-1.414 1.414l4 4a1 1 0 001.414 0l8-8a1 1 0 000-1.414z" clipRule="evenodd" />
         </svg>
       ) : (
@@ -84,8 +84,8 @@ function ConfirmModal({ benefit, onConfirm, onClose }: { benefit: Benefit; onCon
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div className="bg-white rounded-xl border border-gray-200 shadow-2xl w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
         <div className="px-6 pt-6 pb-4">
-          <div className="w-10 h-10 bg-emerald-50 rounded-full flex items-center justify-center mb-4">
-            <svg className="w-5 h-5 text-emerald-600" viewBox="0 0 20 20" fill="currentColor">
+          <div className="w-10 h-10 bg-brand-light rounded-full flex items-center justify-center mb-4">
+            <svg className="w-5 h-5 text-brand" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
             </svg>
           </div>
@@ -106,7 +106,7 @@ function ConfirmModal({ benefit, onConfirm, onClose }: { benefit: Benefit; onCon
             Cancel
           </button>
           <button onClick={onConfirm}
-            className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg py-2.5 text-sm font-medium transition-colors">
+            className="flex-1 bg-brand hover:bg-brand-dark text-white rounded-lg py-2.5 text-sm font-medium transition-colors">
             Generate code
           </button>
         </div>
@@ -163,7 +163,7 @@ function RedemptionModal({ benefit, redemption, onRotate, onClose }: {
             <div className="w-full text-center space-y-3">
               <p className="text-sm font-medium text-red-600">This code has expired</p>
               <button onClick={onRotate}
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg py-2.5 text-sm font-medium transition-colors">
+                className="w-full bg-brand hover:bg-brand-dark text-white rounded-lg py-2.5 text-sm font-medium transition-colors">
                 Generate new code
               </button>
             </div>
@@ -251,18 +251,18 @@ export default function PassView({ data }: { data: PassResponse }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-[#F2F6F4]">
 
       {/* ── Nav ── */}
-      <header className="bg-white border-b border-gray-200 px-6 py-3.5 flex items-center justify-between sticky top-0 z-10">
+      <header className="bg-brand border-b border-brand-dark px-6 py-3.5 flex items-center justify-between sticky top-0 z-10">
         <div className="flex items-center gap-3">
-          <div className="w-7 h-7 bg-emerald-600 rounded flex items-center justify-center shrink-0">
+          <div className="w-7 h-7 bg-white/20 rounded flex items-center justify-center shrink-0">
             <span className="text-white text-xs font-bold">JP</span>
           </div>
-          <span className="font-semibold text-gray-800 text-sm">JungfrauPass</span>
+          <span className="font-semibold text-white text-sm">JungfrauPass</span>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-500 hidden sm:block">{pass.guestName}</span>
+          <span className="text-sm text-white/70 hidden sm:block">{pass.guestName}</span>
           <div className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded border ${cfg.bg} ${cfg.text}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
             {cfg.label}
@@ -273,7 +273,7 @@ export default function PassView({ data }: { data: PassResponse }) {
       <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
 
         {/* ── Hero ── */}
-        <div className="bg-white rounded-xl border border-gray-200 px-6 py-5 flex items-center justify-between gap-6">
+        <div className="bg-white rounded-xl border border-gray-200 px-6 py-5 flex items-center justify-between gap-6 transition-all duration-200 hover:shadow-md hover:border-brand-border">
           <div>
             <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">
               {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
@@ -284,7 +284,7 @@ export default function PassView({ data }: { data: PassResponse }) {
             </p>
           </div>
           <div className="shrink-0 text-right">
-            <p className="text-3xl font-bold text-gray-900 tabular-nums">{days}</p>
+            <p className="text-3xl font-bold text-brand tabular-nums">{days}</p>
             <p className="text-xs text-gray-400 mt-0.5">{days === 1 ? 'day' : 'days'} remaining</p>
           </div>
         </div>
@@ -293,7 +293,7 @@ export default function PassView({ data }: { data: PassResponse }) {
         <div className="grid grid-cols-3 gap-4">
 
           {/* Wallet */}
-          <div className="bg-white rounded-xl border border-gray-200 px-5 py-5">
+          <div className="bg-white rounded-xl border border-gray-200 px-5 py-5 transition-all duration-200 hover:shadow-md hover:border-brand-border hover:-translate-y-0.5">
             <div className="flex items-start justify-between mb-3">
               <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Wallet balance</p>
               <div className="w-7 h-7 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center">
@@ -318,7 +318,7 @@ export default function PassView({ data }: { data: PassResponse }) {
           </div>
 
           {/* Benefits summary */}
-          <div className="bg-white rounded-xl border border-gray-200 px-5 py-5">
+          <div className="bg-white rounded-xl border border-gray-200 px-5 py-5 transition-all duration-200 hover:shadow-md hover:border-brand-border hover:-translate-y-0.5">
             <div className="flex items-start justify-between mb-3">
               <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Benefits</p>
               <div className="w-7 h-7 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center">
@@ -334,7 +334,7 @@ export default function PassView({ data }: { data: PassResponse }) {
             <div className="space-y-1.5">
               {sortedOneTime.slice(0, 2).map((b) => (
                 <div key={b.id} className="flex items-center gap-2">
-                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${b.redeemedAt ? 'bg-gray-300' : 'bg-emerald-500'}`} />
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${b.redeemedAt ? 'bg-gray-300' : 'bg-brand'}`} />
                   <span className="text-xs text-gray-500 truncate">{b.title}</span>
                 </div>
               ))}
@@ -345,11 +345,11 @@ export default function PassView({ data }: { data: PassResponse }) {
           </div>
 
           {/* Sustainability */}
-          <div className="bg-white rounded-xl border border-gray-200 px-5 py-5">
+          <div className="bg-white rounded-xl border border-gray-200 px-5 py-5 transition-all duration-200 hover:shadow-md hover:border-brand-border hover:-translate-y-0.5">
             <div className="flex items-start justify-between mb-3">
               <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Sustainability</p>
-              <div className="w-7 h-7 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center justify-center">
-                <svg className="w-3.5 h-3.5 text-emerald-600" viewBox="0 0 20 20" fill="currentColor">
+              <div className="w-7 h-7 bg-brand-light border border-brand-border rounded-lg flex items-center justify-center">
+                <svg className="w-3.5 h-3.5 text-brand" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
                 </svg>
               </div>
@@ -364,7 +364,7 @@ export default function PassView({ data }: { data: PassResponse }) {
                 <span>100 pts</span>
               </div>
               <div className="w-full bg-gray-100 rounded-full h-2">
-                <div className="bg-emerald-500 h-2 rounded-full transition-all" style={{ width: `${pass.sustainabilityPoints}%` }} />
+                <div className="bg-brand h-2 rounded-full transition-all" style={{ width: `${pass.sustainabilityPoints}%` }} />
               </div>
               <p className="text-xs text-gray-400 mt-2 leading-relaxed">
                 Earned via BOB train + hiking
@@ -375,7 +375,7 @@ export default function PassView({ data }: { data: PassResponse }) {
         </div>
 
         {/* ── Benefits ── */}
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden transition-all duration-200 hover:shadow-md hover:border-brand-border">
 
           <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-gray-800">Your benefits</h2>
@@ -424,7 +424,7 @@ export default function PassView({ data }: { data: PassResponse }) {
                             className={`text-xs font-medium px-3.5 py-1.5 rounded-lg transition-colors ${
                               hasActiveCode
                                 ? 'bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100'
-                                : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                                : 'bg-brand hover:bg-brand-dark text-white'
                             }`}>
                             {hasActiveCode ? 'View code' : 'Redeem'}
                           </button>
@@ -446,14 +446,14 @@ export default function PassView({ data }: { data: PassResponse }) {
               {alwaysActive.map((benefit) => (
                 <div key={benefit.id} className="px-6 py-3.5 flex items-center justify-between hover:bg-gray-50 transition-colors">
                   <div className="flex items-center gap-3">
-                    <span className="w-2 h-2 bg-emerald-500 rounded-full shrink-0" />
+                    <span className="w-2 h-2 bg-brand rounded-full shrink-0" />
                     <div>
                       <p className="text-sm font-medium text-gray-900">{benefit.title}</p>
                       <p className="text-xs text-gray-500 mt-0.5">{benefit.partnerName} · {benefit.description}</p>
                     </div>
                   </div>
                   <button onClick={() => openBenefit(benefit)}
-                    className="text-xs font-medium px-3.5 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 transition-colors shrink-0 ml-4">
+                    className="text-xs font-medium px-3.5 py-1.5 rounded-lg bg-brand-light border border-brand-border text-brand hover:bg-brand-light transition-colors shrink-0 ml-4">
                     Show QR
                   </button>
                 </div>
