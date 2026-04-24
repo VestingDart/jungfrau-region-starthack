@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xxd \"/c/Users/Finn/IdeaProjects/Jungfrau Region Starthack/.gitignore\")"
+    ]
+  }
+}
