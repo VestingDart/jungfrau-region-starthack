@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xxd \"/c/Users/Finn/IdeaProjects/Jungfrau Region Starthack/.gitignore\")",
+      "Bash(npm install *)",
+      "Bash(mkdir -p \"C:\\\\Users\\\\Finn\\\\IdeaProjects\\\\Jungfrau Region Starthack\\\\app\\\\api\\\\pass\\\\[id]\")",
+      "Bash(mkdir -p \"C:\\\\Users\\\\Finn\\\\IdeaProjects\\\\Jungfrau Region Starthack\\\\app\\\\pass\\\\[id]\")",
+      "Bash(npm run *)",
+      "Bash(curl -s http://localhost:3001/api/pass/demo-anna)",
+      "Bash(curl *)",
+      "Bash(taskkill *)",
+      "PowerShell(Stop-Process *)"
+    ]
+  }
+}
