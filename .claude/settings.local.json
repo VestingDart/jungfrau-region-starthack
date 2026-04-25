@@ -13,7 +13,9 @@
       "WebFetch(domain:haslital.swiss)",
       "Bash(git diff *)",
       "Bash(npx tsc *)",
-      "Bash(xargs ls *)"
+      "Bash(xargs ls *)",
+      "Bash(npx create-next-app@latest *)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d['version']\\)\")"
     ]
   }
 }

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.001.09">
+  <CstmrCdtTrfInitn>
+    <GrpHdr>
+      <MsgId>JFR-RUN-20260425151319</MsgId>
+      <CreDtTm>2026-04-25T15:13:19+00:00</CreDtTm>
+      <NbOfTxs>1</NbOfTxs>
+      <CtrlSum>12.00</CtrlSum>
+      <InitgPty>
+        <Nm>Jungfrau Region Tourismus AG</Nm>
+      </InitgPty>
+    </GrpHdr>
+    <PmtInf>
+      <PmtInfId>JFR-PMT-20260425</PmtInfId>
+      <PmtMtd>TRF</PmtMtd>
+      <NbOfTxs>1</NbOfTxs>
+      <CtrlSum>12.00</CtrlSum>
+      <PmtTpInf>
+        <SvcLvl>
+          <Cd>SEPA</Cd>
+        </SvcLvl>
+      </PmtTpInf>
+      <ReqdExctnDt>
+        <Dt>2026-04-25</Dt>
+      </ReqdExctnDt>
+      <Dbtr>
+        <Nm>Jungfrau Region Tourismus AG</Nm>
+      </Dbtr>
+      <DbtrAcct>
+        <Id>
+          <IBAN>CH9300762011623852957</IBAN>
+        </Id>
+      </DbtrAcct>
+      <DbtrAgt>
+        <FinInstnId>
+          <BICFI>POFICHBEXXX</BICFI>
+        </FinInstnId>
+      </DbtrAgt>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>JFR-202604-E97D7D</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="CHF">12.00</InstdAmt>
+        </Amt>
+        <CdtrAgt>
+          <FinInstnId>
+            <BICFI>POFICHBEXXX</BICFI>
+          </FinInstnId>
+        </CdtrAgt>
+        <Cdtr>
+          <Nm>Jungfraubahnen</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>CH3608387000001080173</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>JFR redemptions 2020-01-01 to 2099-12-31, 1 txn(s), ref JFR-202604-E97D7D</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+    </PmtInf>
+  </CstmrCdtTrfInitn>
+</Document>
