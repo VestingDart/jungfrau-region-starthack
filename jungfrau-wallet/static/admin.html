@@ -3,242 +3,424 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Jungfrau Wallet — Admin</title>
+<title>Jungfrau Settlement Console</title>
 <style>
-  :root {
-    --red: #DC0018; --ink: #0E141B; --sub: #5A6470;
-    --bg: #F4F5F7; --card: #ffffff; --line: #E3E6EA;
-    --green: #1F8A4C; --gold: #B8860B; --blue: #2864B8;
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; font-family: -apple-system, system-ui, "Segoe UI", sans-serif;
-         background: var(--bg); color: var(--ink); line-height: 1.5; }
-  header { background: var(--ink); color: white; padding: 1rem 1.5rem;
-           display: flex; align-items: center; justify-content: space-between; }
-  header h1 { margin: 0; font-size: 1.1rem; font-weight: 600; }
-  .badge { background: var(--blue); color: white; padding: 0.15rem 0.5rem;
-           border-radius: 4px; font-size: 0.75rem; }
-  main { max-width: 920px; margin: 0 auto; padding: 1.5rem; }
-  .card { background: var(--card); border: 1px solid var(--line);
-          border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
-  h2 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em;
-       color: var(--sub); margin: 0 0 0.75rem; font-weight: 600; }
-  button {
-    background: var(--ink); color: white; border: 0; padding: 0.6rem 1.25rem;
-    border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.9rem;
-  }
-  button.primary { background: var(--red); }
-  button.green { background: var(--green); }
-  button.small { padding: 0.3rem 0.6rem; font-size: 0.75rem; }
-  button.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
-  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-  th, td { padding: 0.5rem 0.6rem; text-align: left; border-bottom: 1px solid var(--line); }
-  th { color: var(--sub); font-weight: 600; font-size: 0.75rem;
-       text-transform: uppercase; letter-spacing: 0.05em; }
-  .status-pill { display: inline-block; padding: 0.1rem 0.5rem; border-radius: 12px;
-                 font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
-  .pill-draft { background: var(--line); color: var(--sub); }
-  .pill-submitted { background: #FFF5E0; color: var(--gold); }
-  .pill-confirmed { background: #E0F4E9; color: var(--green); }
-  .pill-failed { background: #FDECEF; color: var(--red); }
-  .toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
-           background: var(--ink); color: white; padding: 0.75rem 1.25rem;
-           border-radius: 8px; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
-  .toast.show { opacity: 1; }
-  .empty { color: var(--sub); font-size: 0.85rem; text-align: center; padding: 1rem; }
-  pre.xml-preview { background: var(--ink); color: #aef0ff; padding: 1rem;
-                    border-radius: 8px; max-height: 400px; overflow: auto;
-                    font-size: 0.75rem; }
-  input.adminkey { font-family: ui-monospace, monospace; }
+/* ─── Jungfrau Region colour palette ─── */
+:root {
+  --night:  #0E1C2E;
+  --navy:   #1B3259;
+  --blue:   #2D5396;
+  --sand:   #F2EFE8;
+  --white:  #FFFFFF;
+  --gold:   #C4950E;
+  --pine:   #3D7252;
+  --text:   #1C1C2E;
+  --sub:    #64748B;
+  --line:   #DDD9D2;
+  --danger: #C5202E;
+  --ease: cubic-bezier(.4,0,.2,1);
+  --shadow-sm: 0 2px 12px rgba(14,28,46,.07);
+  --shadow-md: 0 8px 32px rgba(14,28,46,.13);
+  --r: 14px;
+}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  font-family: -apple-system, system-ui, "Segoe UI", sans-serif;
+  background: var(--sand); color: var(--text); line-height:1.5;
+}
+
+/* ─── Navbar ─── */
+.navbar {
+  position:sticky; top:0; z-index:40; height:64px;
+  background:rgba(14,28,46,.94); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+  display:flex; align-items:center; padding:0 2rem; gap:1.25rem;
+  border-bottom:1px solid rgba(255,255,255,.07);
+}
+.nav-logo { font-size:.95rem; font-weight:900; letter-spacing:.12em; text-transform:uppercase; color:#fff; flex-shrink:0; }
+.nav-logo em { color:var(--blue); font-style:normal; }
+.nav-badge { background:var(--blue); color:#fff; padding:.18rem .6rem; border-radius:4px; font-size:.62rem; font-weight:800; text-transform:uppercase; letter-spacing:.12em; }
+.nav-right { margin-left:auto; display:flex; align-items:center; gap:1.25rem; }
+.nav-link  { color:rgba(255,255,255,.6); text-decoration:none; font-size:.82rem; font-weight:500; transition:color .2s; }
+.nav-link:hover { color:#fff; }
+
+/* ─── Hero banner ─── */
+.hero {
+  position:relative; height:220px;
+  background-image:url('https://picsum.photos/seed/swiss-finance-bank/1920/400');
+  background-size:cover; background-position:center 35%;
+  display:flex; align-items:flex-end;
+}
+.hero::after {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(to top, rgba(14,28,46,.95) 0%, rgba(14,28,46,.5) 55%, rgba(14,28,46,.18) 100%);
+}
+.hero-content {
+  position:relative; z-index:1; color:#fff;
+  padding:1.75rem 2.5rem;
+  max-width:1200px; width:100%; margin:0 auto;
+}
+.hero-content h1 { font-size:1.9rem; font-weight:900; letter-spacing:-.02em; margin-bottom:.2rem; }
+.hero-content p  { font-size:.875rem; opacity:.65; }
+
+/* ─── Layout ─── */
+main { max-width:1200px; margin:0 auto; padding:2rem 2rem 3.5rem; }
+
+@keyframes rise {
+  from { opacity:0; transform:translateY(14px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+/* ─── Top row: 2-col ─── */
+.top-row {
+  display:grid; grid-template-columns:1fr 1.6fr; gap:1.25rem;
+  margin-bottom:1.5rem; align-items:start;
+}
+
+/* ─── Cards ─── */
+.card {
+  background:var(--white); border-radius:var(--r);
+  box-shadow:var(--shadow-sm); overflow:hidden;
+  animation:rise .4s var(--ease) both;
+}
+.card-head {
+  padding:1rem 1.5rem; border-bottom:1px solid var(--line);
+  display:flex; align-items:center; justify-content:space-between; gap:.75rem;
+}
+.card-head h2 { font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.09em; color:var(--sub); }
+.card-body { padding:1.5rem; }
+
+/* admin key */
+.key-input {
+  width:100%; padding:.68rem .9rem;
+  border:1px solid var(--line); border-radius:9px;
+  font-family:ui-monospace,"Cascadia Code",monospace; font-size:.82rem;
+  color:var(--text); background:var(--sand); transition:border-color .2s, background .2s;
+}
+.key-input:focus { outline:none; border-color:var(--navy); background:var(--white); }
+.key-hint { font-size:.74rem; color:var(--sub); margin-top:.45rem; }
+
+/* settlement actions */
+.action-desc {
+  font-size:.85rem; color:var(--sub); line-height:1.65; margin-bottom:1.35rem;
+}
+.action-desc strong { color:var(--text); font-weight:700; }
+.action-row { display:flex; gap:.75rem; flex-wrap:wrap; }
+
+/* buttons */
+.btn { border:none; border-radius:9px; font-weight:700; cursor:pointer; font-family:inherit; transition:all .18s; }
+.btn-primary { background:var(--navy); color:#fff; padding:.68rem 1.35rem; font-size:.9rem; }
+.btn-primary:hover { background:var(--blue); transform:translateY(-1px); }
+.btn-ghost { background:transparent; color:var(--text); border:1px solid var(--line); padding:.68rem 1.1rem; font-size:.875rem; }
+.btn-ghost:hover { border-color:var(--navy); color:var(--navy); }
+.btn-pine { background:var(--pine); color:#fff; padding:.32rem .7rem; font-size:.72rem; }
+.btn-pine:hover { opacity:.88; }
+.btn-outline { background:transparent; color:var(--sub); border:1px solid var(--line); padding:.32rem .7rem; font-size:.72rem; }
+.btn-outline:hover { border-color:var(--navy); color:var(--navy); }
+.btn-sm { padding:.3rem .65rem; font-size:.72rem; }
+
+/* result banners */
+.result-ok, .result-empty {
+  margin-top:1rem; padding:.9rem 1.1rem;
+  border-radius:9px; font-size:.875rem;
+  animation:rise .2s var(--ease);
+}
+.result-ok { background:#e8f5ee; border-left:4px solid var(--pine); }
+.result-ok strong { display:block; font-weight:700; color:var(--pine); margin-bottom:.2rem; }
+.result-empty { color:var(--sub); }
+
+/* ─── Batches table ─── */
+.table-wrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:.82rem; min-width:700px; }
+thead th {
+  padding:.65rem .85rem; text-align:left;
+  font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em;
+  color:var(--sub); background:var(--sand);
+  border-bottom:2px solid var(--line);
+}
+tbody td {
+  padding:.72rem .85rem;
+  border-bottom:1px solid var(--line);
+  vertical-align:middle;
+}
+tbody tr:last-child td { border-bottom:none; }
+tbody tr:hover td { background:#faf8f4; }
+.td-partner strong { display:block; font-weight:700; font-size:.88rem; }
+.td-partner .td-sub { font-size:.72rem; color:var(--sub); margin-top:.1rem; }
+.td-period { font-size:.75rem; color:var(--sub); line-height:1.6; }
+.td-chf    { font-weight:800; }
+.td-ref code { font-size:.68rem; }
+
+/* pills */
+.pill { display:inline-block; padding:.18rem .55rem; border-radius:20px; font-size:.63rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; }
+.pill-draft     { background:var(--line); color:var(--sub); }
+.pill-submitted { background:#fff5d8; color:var(--gold); }
+.pill-confirmed { background:#e2f2e8; color:var(--pine); }
+.pill-failed    { background:#fdecef; color:var(--danger); }
+
+.td-actions { display:flex; gap:.4rem; }
+
+/* ─── XML preview ─── */
+.xml-card-body { padding:0; }
+.xml-bar {
+  padding:.7rem 1.5rem;
+  background:rgba(14,28,46,.04);
+  border-bottom:1px solid var(--line);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.xml-filename { font-family:ui-monospace,monospace; font-size:.75rem; color:var(--sub); }
+.xml-tag {
+  background:rgba(45,83,150,.12); color:var(--blue);
+  padding:.15rem .5rem; border-radius:4px; font-size:.65rem; font-weight:700;
+}
+.xml-shell {
+  background:#0d1117; border-radius:0 0 var(--r) var(--r);
+  overflow:hidden;
+}
+pre.xml-code {
+  color:#a6e3a1; padding:1.35rem 1.5rem;
+  font-size:.72rem; max-height:440px; overflow:auto;
+  font-family:ui-monospace,"Cascadia Code",monospace; line-height:1.7;
+  margin:0;
+}
+.xml-empty-msg {
+  padding:2.5rem 1.5rem; text-align:center;
+  color:rgba(255,255,255,.25); font-size:.8rem;
+  font-family:ui-monospace,monospace;
+}
+.xml-footer { padding:.85rem 1.5rem; font-size:.75rem; color:var(--sub); border-top:1px solid var(--line); line-height:1.6; }
+
+/* misc */
+.empty-msg { text-align:center; padding:2rem 1rem; color:var(--sub); font-size:.875rem; }
+.mb-card { margin-bottom:1.5rem; }
+
+.toast {
+  position:fixed; bottom:1.5rem; left:50%; transform:translateX(-50%);
+  background:var(--night); color:#fff;
+  padding:.75rem 1.25rem; border-radius:10px;
+  opacity:0; transition:opacity .2s; pointer-events:none; z-index:200;
+  font-size:.875rem; font-weight:500; box-shadow:0 8px 24px rgba(0,0,0,.3);
+}
+.toast.show { opacity:1; }
+
+@media(max-width:900px){
+  .top-row { grid-template-columns:1fr; }
+  .navbar { padding:0 1rem; }
+  main { padding:1.25rem 1rem 2.5rem; }
+  .hero-content { padding:1.5rem 1.25rem; }
+}
 </style>
 </head>
 <body>
 
-<header>
-  <h1>🏦 Settlement Console <span class="badge">Demo</span></h1>
-  <div>
-    <a href="/" style="color: white; text-decoration: none; font-size: 0.85rem;">← Guest</a>
-    &nbsp; <a href="/partner" style="color: white; text-decoration: none; font-size: 0.85rem;">← Partner</a>
+<!-- ── Navbar ── -->
+<nav class="navbar">
+  <div class="nav-logo">Jungfrau<em>.</em>Admin</div>
+  <span class="nav-badge">Demo</span>
+  <div class="nav-right">
+    <a class="nav-link" href="/">Guest</a>
+    <a class="nav-link" href="/partner">Partner</a>
   </div>
-</header>
+</nav>
 
+<!-- ── Hero ── -->
+<div class="hero">
+  <div class="hero-content">
+    <h1>Settlement Console</h1>
+    <p>Generate ISO 20022 payment batches, confirm partner payouts, and manage demo data.</p>
+  </div>
+</div>
+
+<!-- ── Main ── -->
 <main>
-  <div class="card">
-    <h2>Admin key</h2>
-    <input id="adminKey" class="adminkey" value="admin-dev-key" />
-    <p style="font-size: 0.8rem; color: var(--sub); margin: 0.5rem 0 0;">
-      Required for all admin endpoints. Default: <code>admin-dev-key</code>.
-    </p>
+
+  <!-- Top row -->
+  <div class="top-row">
+
+    <!-- Admin key -->
+    <div class="card" style="animation-delay:.04s">
+      <div class="card-head"><h2>Admin Key</h2></div>
+      <div class="card-body">
+        <input id="adminKey" class="key-input" value="admin-dev-key" spellcheck="false" />
+        <div class="key-hint">Required for all admin endpoints. Default: <code>admin-dev-key</code></div>
+      </div>
+    </div>
+
+    <!-- Settlement actions -->
+    <div class="card" style="animation-delay:.09s">
+      <div class="card-head"><h2>Settlement Actions</h2></div>
+      <div class="card-body">
+        <div class="action-desc">
+          Aggregates all <strong>pending</strong> merchant ledger entries into per-partner batches
+          and generates a real ISO 20022 <code>pain.001.001.09</code> XML file ready for your bank.
+        </div>
+        <div class="action-row">
+          <button class="btn btn-primary" onclick="runSettlement()">Run Settlement</button>
+          <button class="btn btn-ghost"   onclick="reseed()">Reset &amp; Reseed</button>
+        </div>
+        <div id="settlementResult"></div>
+      </div>
+    </div>
+
   </div>
 
-  <div class="card">
-    <h2>Run settlement</h2>
-    <p style="font-size: 0.85rem; color: var(--sub); margin: 0 0 0.75rem;">
-      Aggregates all <strong>pending</strong> merchant_ledger entries into per-partner batches
-      and generates a real ISO 20022 <code>pain.001.001.09</code> XML file for the bank.
-    </p>
-    <button class="primary" onclick="runSettlement()">▶ Run settlement now</button>
-    <button class="ghost" onclick="reseed()">↻ Reset & reseed demo data</button>
-    <div id="settlementResult"></div>
-  </div>
-
-  <div class="card">
-    <h2>Settlement batches</h2>
-    <button class="ghost small" onclick="loadBatches()">↻ Refresh</button>
-    <div style="margin-top: 0.75rem; overflow-x: auto;">
-      <table id="batchTable">
-        <thead><tr>
-          <th>Partner</th><th>Period</th><th>Total</th><th>#</th><th>Reference</th><th>Status</th><th>Actions</th>
-        </tr></thead>
-        <tbody></tbody>
-      </table>
+  <!-- Settlement batches -->
+  <div class="card mb-card" style="animation-delay:.14s">
+    <div class="card-head">
+      <h2>Settlement Batches</h2>
+      <button class="btn btn-outline btn-sm" onclick="loadBatches()">Refresh</button>
+    </div>
+    <div class="card-body" style="padding:0">
+      <div class="table-wrap">
+        <table id="batchTable">
+          <thead>
+            <tr>
+              <th>Partner</th>
+              <th>Period</th>
+              <th>Total</th>
+              <th>Count</th>
+              <th>Reference</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td colspan="7" class="empty-msg">No batches yet — run a settlement first</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
-  <div class="card" id="painPreviewCard" style="display: none;">
-    <h2>pain.001 file preview</h2>
-    <pre class="xml-preview" id="painPreview"></pre>
-    <p style="font-size: 0.8rem; color: var(--sub); margin-top: 0.5rem;">
-      This is the file finance uploads to the bank's e-banking portal. ISO 20022 standard,
-      accepted by all Swiss banks (PostFinance, UBS, Raiffeisen, ZKB, etc.).
-    </p>
+  <!-- pain.001 preview (always visible) -->
+  <div class="card" style="animation-delay:.19s">
+    <div class="card-head">
+      <h2>pain.001 File Preview</h2>
+      <span class="xml-tag">ISO 20022 &middot; pain.001.001.09</span>
+    </div>
+    <div class="xml-card-body">
+      <div class="xml-bar">
+        <span class="xml-filename" id="xmlFileName">No file loaded</span>
+      </div>
+      <div class="xml-shell">
+        <pre class="xml-code" id="painPreview"><div class="xml-empty-msg">Click "View XML" on a batch row to load the payment file here.</div></pre>
+      </div>
+      <div class="xml-footer">
+        This file is uploaded to the bank's e-banking portal.
+        ISO 20022 pain.001 is accepted by all Swiss banks — PostFinance, UBS, Raiffeisen, ZKB, and others.
+      </div>
+    </div>
   </div>
+
 </main>
 
 <div class="toast" id="toast"></div>
 
 <script>
-function adminKey() { return document.getElementById("adminKey").value; }
-function toast(msg) {
-  const t = document.getElementById("toast");
-  t.textContent = msg; t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 2400);
+const $ = id => document.getElementById(id);
+function adminKey(){ return $('adminKey').value; }
+function esc(s){ return(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2400); }
+
+async function api(path, opts={}){
+  opts.headers = opts.headers||{};
+  opts.headers['Content-Type']='application/json';
+  opts.headers['X-Admin-Key']=adminKey();
+  if(opts.body && typeof opts.body==='object') opts.body=JSON.stringify(opts.body);
+  const r=await fetch(path,opts);
+  const txt=await r.text();
+  let d; try{d=JSON.parse(txt);}catch(_){d={raw:txt};}
+  if(!r.ok) throw new Error(d.error||`HTTP ${r.status}`);
+  return d;
 }
 
-async function api(path, options = {}) {
-  options.headers = options.headers || {};
-  options.headers["Content-Type"] = "application/json";
-  options.headers["X-Admin-Key"] = adminKey();
-  if (options.body && typeof options.body === "object") {
-    options.body = JSON.stringify(options.body);
-  }
-  const r = await fetch(path, options);
-  const txt = await r.text();
-  let data;
-  try { data = JSON.parse(txt); } catch (_) { data = { raw: txt }; }
-  if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
-  return data;
-}
-
-async function runSettlement() {
+/* ── Settlement ── */
+async function runSettlement(){
   try {
-    const r = await api("/api/admin/settlement/run", {
-      method: "POST",
-      body: { period_start: "2020-01-01", period_end: "2099-12-31" },
+    const r=await api('/api/admin/settlement/run',{
+      method:'POST',
+      body:{period_start:'2020-01-01',period_end:'2099-12-31'}
     });
-    const div = document.getElementById("settlementResult");
-    if (r.batches.length === 0) {
-      div.innerHTML = '<p style="color: var(--sub); margin-top: 0.75rem;">No pending redemptions to settle.</p>';
-      return;
+    const div=$('settlementResult');
+    if(!r.batches.length){
+      div.innerHTML='<div class="result-empty">No pending redemptions to settle.</div>'; return;
     }
-    div.innerHTML = `
-      <div style="margin-top: 0.75rem; padding: 0.85rem; background: #E0F4E9;
-                  border-left: 4px solid var(--green); border-radius: 8px;">
-        <strong>✓ Created ${r.batches.length} batch(es) totaling CHF ${r.total_chf.toFixed(2)}</strong>
-        <div style="font-size: 0.85rem; margin-top: 0.4rem;">
-          pain.001 file: <code>${r.pain001_file}</code>
-        </div>
-      </div>
-    `;
+    div.innerHTML=`<div class="result-ok">
+      <strong>Created ${r.batches.length} batch(es) — CHF ${r.total_chf.toFixed(2)} total</strong>
+      pain.001 file: <code>${esc(r.pain001_file)}</code>
+    </div>`;
     loadBatches();
-  } catch (e) {
-    toast("Settlement failed: " + e.message);
-  }
+  } catch(e){ toast('Settlement failed: '+e.message); }
 }
 
-async function reseed() {
-  if (!confirm("Wipe and reseed all demo data?")) return;
+async function reseed(){
+  if(!confirm('Wipe and reseed all demo data? This cannot be undone.')) return;
   try {
-    await api("/api/admin/seed", { method: "POST" });
-    toast("Reseeded — refresh other tabs");
+    await api('/api/admin/seed',{method:'POST'});
+    toast('Reseeded — refresh other tabs');
     loadBatches();
-    document.getElementById("settlementResult").innerHTML = "";
-    document.getElementById("painPreviewCard").style.display = "none";
-  } catch (e) {
-    toast("Reseed failed: " + e.message);
-  }
+    $('settlementResult').innerHTML='';
+    $('painPreview').innerHTML='<div class="xml-empty-msg">Click "View XML" on a batch row to load the payment file here.</div>';
+    $('xmlFileName').textContent='No file loaded';
+  } catch(e){ toast('Reseed failed: '+e.message); }
 }
 
-async function loadBatches() {
+/* ── Batches ── */
+async function loadBatches(){
   try {
-    const r = await api("/api/admin/settlement/batches");
-    const tbody = document.querySelector("#batchTable tbody");
-    if (r.batches.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" class="empty">No batches yet</td></tr>';
-      return;
+    const r=await api('/api/admin/settlement/batches');
+    const tbody=document.querySelector('#batchTable tbody');
+    if(!r.batches||!r.batches.length){
+      tbody.innerHTML='<tr><td colspan="7" class="empty-msg">No batches yet — run a settlement first</td></tr>'; return;
     }
-    tbody.innerHTML = r.batches.map(b => {
-      const chf = (b.total_rappen / 100).toFixed(2);
-      const date = new Date(b.created_at).toLocaleString("en-CH",
-        { dateStyle: "short", timeStyle: "short" });
-      const status = b.status;
-      const canConfirm = status === "submitted" || status === "draft";
-      return `
-        <tr>
-          <td><strong>${escapeHtml(b.partner_name)}</strong><br><span style="color:var(--sub);font-size:0.75rem">${date}</span></td>
-          <td style="font-size:0.75rem; color: var(--sub);">${b.period_start.substring(0,10)}<br>→ ${b.period_end.substring(0,10)}</td>
-          <td><strong>CHF ${chf}</strong></td>
-          <td>${b.redemption_count}</td>
-          <td><code style="font-size:0.7rem">${b.payment_reference}</code></td>
-          <td><span class="status-pill pill-${status}">${status}</span></td>
-          <td>
-            ${b.pain001_file_path ? `<button class="ghost small" onclick="viewPain001('${b.id}')">View XML</button>` : ''}
-            ${canConfirm ? `<button class="green small" onclick="confirmBatch('${b.id}')">Mark paid</button>` : ''}
-          </td>
-        </tr>
-      `;
-    }).join("");
-  } catch (e) {
-    toast("Load batches failed: " + e.message);
-  }
+    tbody.innerHTML=r.batches.map(b=>{
+      const chf=(b.total_rappen/100).toFixed(2);
+      const date=new Date(b.created_at).toLocaleString('en-CH',{dateStyle:'short',timeStyle:'short'});
+      const canConfirm=b.status==='submitted'||b.status==='draft';
+      return`<tr>
+        <td class="td-partner">
+          <strong>${esc(b.partner_name)}</strong>
+          <div class="td-sub">${date}</div>
+        </td>
+        <td class="td-period">${b.period_start.substring(0,10)}<br>&rarr; ${b.period_end.substring(0,10)}</td>
+        <td class="td-chf">CHF ${chf}</td>
+        <td>${b.redemption_count}</td>
+        <td class="td-ref"><code>${esc(b.payment_reference)}</code></td>
+        <td><span class="pill pill-${b.status}">${b.status}</span></td>
+        <td>
+          <div class="td-actions">
+            ${b.pain001_file_path?`<button class="btn btn-outline btn-sm" onclick="viewPain001('${b.id}','${esc(b.payment_reference)}')">View XML</button>`:''}
+            ${canConfirm?`<button class="btn btn-pine btn-sm" onclick="confirmBatch('${b.id}')">Mark paid</button>`:''}
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  } catch(e){ toast('Load batches failed: '+e.message); }
 }
 
-async function viewPain001(batch_id) {
+/* ── XML preview ── */
+async function viewPain001(batch_id, ref){
   try {
-    const r = await fetch(`/api/admin/settlement/pain001/${batch_id}`, {
-      headers: { "X-Admin-Key": adminKey() },
-    });
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    const xml = await r.text();
-    const card = document.getElementById("painPreviewCard");
-    document.getElementById("painPreview").textContent = xml;
-    card.style.display = "block";
-    card.scrollIntoView({ behavior: "smooth" });
-  } catch (e) {
-    toast("Load XML failed: " + e.message);
-  }
+    const r=await fetch(`/api/admin/settlement/pain001/${batch_id}`,{headers:{'X-Admin-Key':adminKey()}});
+    if(!r.ok) throw new Error(`HTTP ${r.status}`);
+    const xml=await r.text();
+    $('xmlFileName').textContent=ref+'.xml';
+    $('painPreview').textContent=xml;
+    $('painPreview').closest('.card').scrollIntoView({behavior:'smooth',block:'start'});
+  } catch(e){ toast('Load XML failed: '+e.message); }
 }
 
-async function confirmBatch(batch_id) {
-  const ref = prompt("Enter the bank's transaction reference (in production this would come back from the bank API):",
-                     "SIC-" + new Date().toISOString().slice(0,10) + "-" + Math.floor(Math.random()*10000));
-  if (!ref) return;
+/* ── Confirm batch ── */
+async function confirmBatch(batch_id){
+  const ref=prompt(
+    'Enter the bank transaction reference:',
+    'SIC-'+new Date().toISOString().slice(0,10)+'-'+Math.floor(Math.random()*10000)
+  );
+  if(!ref) return;
   try {
-    await api("/api/admin/settlement/confirm", {
-      method: "POST",
-      body: { batch_id, bank_transaction_ref: ref },
-    });
-    toast("Marked confirmed - partners now see settled status");
+    await api('/api/admin/settlement/confirm',{method:'POST',body:{batch_id,bank_transaction_ref:ref}});
+    toast('Confirmed — partners now see settled status');
     loadBatches();
-  } catch (e) {
-    toast("Confirm failed: " + e.message);
-  }
-}
-
-function escapeHtml(s) {
-  return (s || "").replace(/[&<>"']/g, c => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
-  })[c]);
+  } catch(e){ toast('Confirm failed: '+e.message); }
 }
 
 loadBatches();

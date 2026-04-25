@@ -265,6 +265,70 @@ def partner_dashboard():
     return jsonify(settlement.get_partner_dashboard(partner["id"]))
 
 
+@app.route("/api/partner/offers", methods=["GET"])
+def partner_list_offers():
+    partner = _require_partner()
+    conn = db.get_connection()
+    try:
+        rows = conn.execute(
+            "SELECT * FROM offers WHERE partner_id = ? ORDER BY created_at DESC",
+            (partner["id"],),
+        ).fetchall()
+        return jsonify({"offers": [dict(r) for r in rows]})
+    finally:
+        conn.close()
+
+
+@app.route("/api/partner/offers", methods=["POST"])
+def partner_create_offer():
+    partner = _require_partner()
+    body = request.get_json(force=True)
+    title = (body.get("title") or "").strip()
+    if not title:
+        abort(400, description="title is required")
+    offer_type = body.get("type", "priced")
+    if offer_type not in ("entitlement", "priced"):
+        abort(400, description="type must be 'entitlement' or 'priced'")
+    price_chf = float(body.get("price_chf") or 0)
+    orig_chf = body.get("original_price_chf")
+    orig_rappen = db.chf_to_rappen(float(orig_chf)) if orig_chf else None
+    description = (body.get("description") or "").strip() or None
+    image_hint = (body.get("image_hint") or "").strip() or None
+
+    conn = db.get_connection()
+    try:
+        offer_id = db.new_id()
+        conn.execute(
+            """INSERT INTO offers (id, partner_id, title, description, type,
+                                   guest_price_rappen, partner_payout_rappen,
+                                   original_price_rappen, image_hint,
+                                   active, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)""",
+            (offer_id, partner["id"], title, description, offer_type,
+             db.chf_to_rappen(price_chf), db.chf_to_rappen(price_chf),
+             orig_rappen, image_hint, db.utcnow_iso()),
+        )
+        return jsonify({"ok": True, "offer_id": offer_id}), 201
+    finally:
+        conn.close()
+
+
+@app.route("/api/partner/offers/<offer_id>", methods=["DELETE"])
+def partner_deactivate_offer(offer_id):
+    partner = _require_partner()
+    conn = db.get_connection()
+    try:
+        result = conn.execute(
+            "UPDATE offers SET active = 0 WHERE id = ? AND partner_id = ?",
+            (offer_id, partner["id"]),
+        )
+        if result.rowcount == 0:
+            abort(404, description="offer not found or not yours")
+        return jsonify({"ok": True})
+    finally:
+        conn.close()
+
+
 # ---- Mock payment provider --------------------------------------------------
 
 @app.route("/api/webhooks/payment", methods=["POST"])
