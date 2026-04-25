@@ -72,7 +72,7 @@ export default function PartnerPage() {
   }
 
   function signOut() {
-    clearSession();
+    clearSession('partner');
     router.push('/login');
   }
 
@@ -169,8 +169,8 @@ export default function PartnerPage() {
   }
 
   useEffect(() => {
-    const s = getSession();
-    if (!s || s.role !== 'partner') { router.replace('/login'); return; }
+    const s = getSession('partner');
+    if (!s) { router.replace('/login'); return; }
     setSession(s);
     setAuthChecking(false);
     const key = s.flaskApiKey || '';

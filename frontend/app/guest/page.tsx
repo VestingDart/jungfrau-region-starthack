@@ -85,7 +85,7 @@ export default function GuestPage() {
   }
 
   function signOut() {
-    clearSession();
+    clearSession('guest');
     router.push('/login');
   }
 
@@ -164,8 +164,8 @@ export default function GuestPage() {
   }
 
   useEffect(() => {
-    const s = getSession();
-    if (!s || s.role !== 'guest') { router.replace('/login'); return; }
+    const s = getSession('guest');
+    if (!s) { router.replace('/login'); return; }
     setSession(s);
     setAuthChecking(false);
     fetch('/api/checkin', {

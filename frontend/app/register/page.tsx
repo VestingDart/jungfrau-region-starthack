@@ -32,8 +32,8 @@ export default function RegisterPage() {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    const session = getSession();
-    if (session) { router.replace(`/${session.role}`); return; }
+    const session = getSession('guest');
+    if (session) { router.replace('/guest'); return; }
 
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code') || '';

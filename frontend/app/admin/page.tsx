@@ -70,7 +70,7 @@ export default function AdminPage() {
   }
 
   function signOut() {
-    clearSession();
+    clearSession('admin');
     router.push('/login');
   }
 
@@ -215,8 +215,8 @@ export default function AdminPage() {
   }
 
   useEffect(() => {
-    const s = getSession();
-    if (!s || s.role !== 'admin') { router.replace('/login'); return; }
+    const s = getSession('admin');
+    if (!s) { router.replace('/login'); return; }
     setSession(s);
     setAuthChecking(false);
     refreshPartners();

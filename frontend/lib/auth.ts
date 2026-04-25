@@ -32,7 +32,9 @@ export interface PartnerRecord {
   flaskApiKey: string;
 }
 
-const KEYS = { SESSION: 'jfr_session', GUESTS: 'jfr_guests', PARTNERS: 'jfr_partners' } as const;
+const KEYS = { GUESTS: 'jfr_guests', PARTNERS: 'jfr_partners' } as const;
+
+function sessionKey(role: Role) { return `jfr_session_${role}`; }
 
 function getGuests(): GuestRecord[] {
   if (typeof window === 'undefined') return [];
@@ -63,20 +65,33 @@ function savePartners(partners: PartnerRecord[]): void {
   localStorage.setItem(KEYS.PARTNERS, JSON.stringify(partners));
 }
 
-export function getSession(): Session | null {
+export function getSession(role?: Role): Session | null {
   if (typeof window === 'undefined') return null;
   try {
-    const stored = localStorage.getItem(KEYS.SESSION);
-    return stored ? (JSON.parse(stored) as Session) : null;
+    if (role) {
+      const stored = localStorage.getItem(sessionKey(role));
+      return stored ? (JSON.parse(stored) as Session) : null;
+    }
+    for (const r of ['guest', 'partner', 'admin'] as Role[]) {
+      const stored = localStorage.getItem(sessionKey(r));
+      if (stored) return JSON.parse(stored) as Session;
+    }
+    return null;
   } catch { return null; }
 }
 
 function saveSession(session: Session): void {
-  localStorage.setItem(KEYS.SESSION, JSON.stringify(session));
+  localStorage.setItem(sessionKey(session.role), JSON.stringify(session));
 }
 
-export function clearSession(): void {
-  localStorage.removeItem(KEYS.SESSION);
+export function clearSession(role?: Role): void {
+  if (role) {
+    localStorage.removeItem(sessionKey(role));
+  } else {
+    for (const r of ['guest', 'partner', 'admin'] as Role[]) {
+      localStorage.removeItem(sessionKey(r));
+    }
+  }
 }
 
 export function loginGuest(username: string, password: string): Session | null {
