@@ -16,3 +16,6 @@ out/
 # OS
 .DS_Store
 Thumbs.db
+
+# User data (plain-text credentials)
+frontend/data/users.json

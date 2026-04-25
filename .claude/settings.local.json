@@ -10,7 +10,8 @@
       "Bash(curl *)",
       "Bash(taskkill *)",
       "PowerShell(Stop-Process *)",
-      "WebFetch(domain:haslital.swiss)"
+      "WebFetch(domain:haslital.swiss)",
+      "Bash(git diff *)"
     ]
   }
 }
