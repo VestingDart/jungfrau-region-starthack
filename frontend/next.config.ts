@@ -7,6 +7,10 @@ const nextConfig: NextConfig = {
         source: "/api/:path*",
         destination: "http://localhost:5000/api/:path*",
       },
+      {
+        source: "/mock-pay/:path*",
+        destination: "http://localhost:5000/mock-pay/:path*",
+      },
     ];
   },
 };
