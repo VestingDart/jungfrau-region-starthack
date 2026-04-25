@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { getSession, clearSession } from '@/lib/auth';
+import type { Session } from '@/lib/auth';
 
 interface Offer {
   id: string;
@@ -34,14 +36,6 @@ interface Dashboard {
   recent_redemptions: Redemption[];
 }
 
-const PARTNERS = [
-  { value: 'key-jungfraubahnen', label: 'Jungfraubahnen' },
-  { value: 'key-baeckerei', label: 'Bäckerei Müller Grindelwald' },
-  { value: 'key-outdoor', label: 'Outdoor Interlaken' },
-  { value: 'key-skirental', label: 'Wengen Ski Rental' },
-  { value: 'key-bergblick', label: 'Restaurant Bergblick Mürren' },
-];
-
 function esc(s: string | null | undefined) {
   return (s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] || c));
 }
@@ -52,7 +46,10 @@ function offerImg(title: string, hint: string | null) {
 }
 
 export default function PartnerPage() {
-  const [partnerKey, setPartnerKey] = useState('key-jungfraubahnen');
+  const router = useRouter();
+  const [authChecking, setAuthChecking] = useState(true);
+  const [session, setSession] = useState<Session | null>(null);
+  const [partnerKey, setPartnerKey] = useState('');
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [qrInput, setQrInput] = useState('');
@@ -73,8 +70,13 @@ export default function PartnerPage() {
     toastTimer.current = setTimeout(() => setToast(''), 2400);
   }
 
-  async function apiFetch(path: string, opts: RequestInit = {}) {
-    const headers: Record<string, string> = { 'Content-Type': 'application/json', 'X-API-Key': partnerKey };
+  function signOut() {
+    clearSession();
+    router.push('/login');
+  }
+
+  async function apiFetch(path: string, opts: RequestInit = {}, key?: string) {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json', 'X-API-Key': key ?? partnerKey };
     if (opts.headers) Object.assign(headers, opts.headers);
     const res = await fetch(path, { ...opts, headers });
     const text = await res.text();
@@ -84,18 +86,18 @@ export default function PartnerPage() {
     return data;
   }
 
-  async function loadDashboard() {
+  async function loadDashboard(key?: string) {
     try {
-      const d = await apiFetch('/api/partner/dashboard') as unknown as Dashboard;
+      const d = await apiFetch('/api/partner/dashboard', {}, key) as unknown as Dashboard;
       setDashboard(d);
     } catch (e: unknown) {
       showToast('Dashboard failed: ' + (e as Error).message);
     }
   }
 
-  async function loadOffers() {
+  async function loadOffers(key?: string) {
     try {
-      const d = await apiFetch('/api/partner/offers') as unknown as { offers: Offer[] };
+      const d = await apiFetch('/api/partner/offers', {}, key) as unknown as { offers: Offer[] };
       setOffers(d.offers || []);
     } catch (e: unknown) {
       showToast('Offers failed: ' + (e as Error).message);
@@ -166,9 +168,18 @@ export default function PartnerPage() {
   }
 
   useEffect(() => {
-    loadDashboard();
-    loadOffers();
-  }, [partnerKey]);
+    const s = getSession();
+    if (!s || s.role !== 'partner') { router.replace('/login'); return; }
+    setSession(s);
+    setAuthChecking(false);
+    const key = s.flaskApiKey || '';
+    setPartnerKey(key);
+    loadDashboard(key);
+    loadOffers(key);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (authChecking) return null;
 
   const inputStyle = { width: '100%', padding: '.62rem .8rem', border: '1px solid var(--line)', borderRadius: 9, fontSize: '.875rem', color: 'var(--text)', background: 'var(--sand)', fontFamily: 'inherit' };
   const labelStyle = { display: 'block' as const, fontSize: '.68rem', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '.07em', color: 'var(--sub)', marginBottom: '.35rem' };
@@ -177,23 +188,16 @@ export default function PartnerPage() {
     <>
       <nav className="navbar">
         <div className="nav-logo">Jungfrau<em style={{ color: 'var(--gold)' }}>.</em>Partner</div>
-        <span className="nav-badge" style={{ background: 'var(--gold)', color: '#fff' }}>Demo</span>
         <div className="nav-right">
-          <Link className="nav-link" href="/guest">Guest</Link>
-          <Link className="nav-link" href="/admin">Admin</Link>
+          <span style={{ fontSize: '.82rem', color: 'rgba(255,255,255,.65)', fontWeight: 500 }}>{session?.name}</span>
+          <button
+            onClick={signOut}
+            style={{ background: 'transparent', border: '1px solid rgba(255,255,255,.2)', color: 'rgba(255,255,255,.7)', padding: '.38rem .85rem', borderRadius: 8, fontSize: '.8rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+          >
+            Sign out
+          </button>
         </div>
       </nav>
-
-      <div style={{ background: 'var(--night)', borderBottom: '1px solid rgba(255,255,255,.06)', padding: '.85rem 2rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        <span style={{ fontSize: '.65rem', textTransform: 'uppercase', letterSpacing: '.1em', color: 'rgba(255,255,255,.4)', fontWeight: 700, whiteSpace: 'nowrap' }}>Signed in as</span>
-        <select
-          value={partnerKey}
-          onChange={e => setPartnerKey(e.target.value)}
-          style={{ padding: '.45rem 1rem', background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.16)', borderRadius: 8, color: '#fff', fontSize: '.875rem', fontWeight: 600, cursor: 'pointer', minWidth: 220, fontFamily: 'inherit' }}
-        >
-          {PARTNERS.map(p => <option key={p.value} value={p.value} style={{ background: '#1a2330' }}>{p.label}</option>)}
-        </select>
-      </div>
 
       <div style={{ background: 'var(--night)', padding: '3rem 2rem', position: 'relative', overflow: 'hidden' }}>
         <div style={{ content: '', position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 60% 50%, rgba(45,83,150,.35) 0%, transparent 70%)', pointerEvents: 'none' }} />
@@ -245,7 +249,7 @@ export default function PartnerPage() {
         <div className="card mb-card" style={{ animationDelay: '.09s' }}>
           <div className="card-head">
             <h2>My Offers</h2>
-            <button className="btn-ghost btn-sm" onClick={loadOffers}>Refresh</button>
+            <button className="btn-ghost btn-sm" onClick={() => loadOffers()}>Refresh</button>
           </div>
           <div className="card-body">
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(270px,1fr))', gap: '1.25rem' }}>
@@ -321,7 +325,7 @@ export default function PartnerPage() {
         <div className="card" style={{ animationDelay: '.14s' }}>
           <div className="card-head">
             <h2>Recent Redemptions</h2>
-            <button className="btn-ghost btn-sm" onClick={loadDashboard}>Refresh</button>
+            <button className="btn-ghost btn-sm" onClick={() => loadDashboard()}>Refresh</button>
           </div>
           <div className="card-body" style={{ paddingTop: '.5rem', paddingBottom: '.5rem' }}>
             {!dashboard?.recent_redemptions?.length
