@@ -1,0 +1,217 @@
+@import "tailwindcss";
+
+@theme {
+  --color-glacier: #f4fafc;
+  --color-mist: #dbe8ef;
+  --color-alpine: #245b7f;
+  --color-slate-deep: #102a43;
+  --color-pine: #24704d;
+  --color-swiss: #dc0018;
+  --color-gold: #d9a441;
+  --shadow-soft: 0 18px 55px rgba(32, 66, 92, .14);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: #102a43;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #f4fafc;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.input {
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid rgba(75, 105, 126, .18);
+  background: rgba(255, 255, 255, .72);
+  padding: 12px 14px;
+  color: #102a43;
+  outline: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .6);
+}
+
+.input:focus {
+  border-color: rgba(36, 91, 127, .46);
+  box-shadow: 0 0 0 4px rgba(36, 91, 127, .10);
+}
+
+.section-title {
+  margin-bottom: 14px;
+  font-size: 1.25rem;
+  font-weight: 950;
+  letter-spacing: -0.02em;
+  color: #102a43;
+}
+
+.scanner-frame {
+  position: relative;
+  display: grid;
+  min-height: 250px;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(11, 39, 60, .94), rgba(16, 55, 88, .86));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12);
+}
+
+.scanner-frame::before,
+.scanner-frame::after {
+  content: "";
+  position: absolute;
+  inset: 24px;
+  border: 2px solid rgba(255, 255, 255, .66);
+  border-radius: 16px;
+}
+
+.scanner-frame::after {
+  inset: 42px;
+  border-color: rgba(217, 164, 65, .32);
+}
+
+.scan-beam {
+  position: absolute;
+  left: 34px;
+  right: 34px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #dc0018 20%, #dc0018 80%, transparent);
+  box-shadow: 0 0 12px rgba(220, 0, 24, .65);
+  animation: scan 2.4s ease-in-out infinite;
+}
+
+.pass-scene {
+  width: 100%;
+  aspect-ratio: 1.586 / 1;
+  min-height: 0;
+  perspective: 1400px;
+  perspective-origin: 50% 42%;
+}
+
+.pass-flipper {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  cursor: pointer;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  text-align: inherit;
+  transform-style: preserve-3d;
+  transform: rotateY(0deg) translateZ(0);
+  transform-origin: center center;
+  transition:
+    transform 1.18s cubic-bezier(.16, 1, .3, 1),
+    filter .45s ease,
+    box-shadow .45s ease;
+  will-change: transform;
+}
+
+.pass-scene:hover .pass-flipper {
+  filter: drop-shadow(0 32px 44px rgba(10, 32, 52, .18));
+}
+
+.pass-flipper.is-flipped {
+  transform: rotateY(180deg) translateZ(0) scale(1.01);
+}
+
+.pass-face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 28px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  box-shadow: 0 28px 70px rgba(10, 32, 52, .28), inset 0 0 0 1px rgba(255, 255, 255, .18);
+  transform-style: preserve-3d;
+}
+
+.pass-face::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 0%, rgba(255, 255, 255, .18) 42%, transparent 58%);
+  opacity: .38;
+  transform: translateX(-35%);
+  transition: transform 1.18s cubic-bezier(.16, 1, .3, 1), opacity .45s ease;
+}
+
+.pass-flipper.is-flipped .pass-face::after {
+  transform: translateX(35%);
+  opacity: .24;
+}
+
+.pass-front {
+  background:
+    linear-gradient(110deg, rgba(255, 255, 255, .10), transparent 34%),
+    radial-gradient(circle at 12% 12%, rgba(255, 255, 255, .22), transparent 28%),
+    linear-gradient(145deg, #071e32 0%, #245b7f 58%, #102a43 100%);
+}
+
+.pass-back {
+  background:
+    radial-gradient(circle at 80% 20%, rgba(36, 91, 127, .12), transparent 26%),
+    linear-gradient(145deg, rgba(255, 255, 255, .96), rgba(221, 237, 246, .94));
+  transform: rotateY(180deg) translateZ(1px);
+}
+
+.pass-mountains {
+  position: absolute;
+  inset: 0;
+  opacity: .9;
+  background:
+    linear-gradient(transparent 50%, rgba(8, 35, 58, .38)),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 700 480'%3E%3Cpath d='M0 300 L88 176 L142 220 L238 82 L326 240 L402 140 L495 265 L575 178 L700 300 V480 H0Z' fill='rgba(255,255,255,.12)'/%3E%3Cpath d='M0 372 C105 318 198 345 315 300 C455 248 555 304 700 266 V480 H0Z' fill='rgba(111,164,95,.28)'/%3E%3Cpath d='M365 326 C455 300 570 306 700 338' stroke='%23dc0018' stroke-width='16' fill='none' opacity='.75'/%3E%3Cpath d='M365 344 C455 318 570 324 700 356' stroke='%23d9a441' stroke-width='5' fill='none' opacity='.85'/%3E%3C/svg%3E") center bottom / cover no-repeat;
+}
+
+.pass-back-stripe {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 24px;
+  height: 44px;
+  background: linear-gradient(90deg, #102a43, #245b7f);
+}
+
+@media (max-width: 420px) {
+  .pass-scene {
+    aspect-ratio: 1.42 / 1;
+  }
+}
+
+@keyframes scan {
+  0%, 100% {
+    top: 36px;
+    opacity: .45;
+  }
+  50% {
+    top: calc(100% - 38px);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    scroll-behavior: auto !important;
+    transition: none !important;
+  }
+}

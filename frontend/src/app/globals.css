@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+:root {
+  --night:  #0E1C2E;
+  --navy:   #1B3259;
+  --blue:   #2D5396;
+  --sand:   #F2EFE8;
+  --white:  #FFFFFF;
+  --gold:   #C4950E;
+  --pine:   #3D7252;
+  --text:   #1C1C2E;
+  --sub:    #64748B;
+  --line:   #DDD9D2;
+  --danger: #C5202E;
+  --ease:   cubic-bezier(.4,0,.2,1);
+  --shadow-sm: 0 2px 12px rgba(14,28,46,.07);
+  --shadow-md: 0 8px 32px rgba(14,28,46,.13);
+  --shadow-lg: 0 20px 56px rgba(14,28,46,.22);
+  --r: 14px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, system-ui, "Segoe UI", sans-serif;
+  background: var(--sand);
+  color: var(--text);
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.navbar {
+  position: sticky; top: 0; z-index: 40; height: 64px;
+  background: rgba(14,28,46,.94);
+  backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+  display: flex; align-items: center; padding: 0 2rem; gap: 1.25rem;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
+.nav-logo { font-size: .95rem; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; color: #fff; flex-shrink: 0; }
+.nav-logo em { font-style: normal; }
+.nav-badge { padding: .18rem .6rem; border-radius: 4px; font-size: .62rem; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; }
+.nav-right { margin-left: auto; display: flex; align-items: center; gap: 1.25rem; }
+.nav-link  { color: rgba(255,255,255,.6); text-decoration: none; font-size: .82rem; font-weight: 500; transition: color .2s; }
+.nav-link:hover { color: #fff; }
+.nav-sep { width: 1px; height: 20px; background: rgba(255,255,255,.12); }
+
+.card {
+  background: var(--white); border-radius: var(--r);
+  box-shadow: var(--shadow-sm); overflow: hidden;
+  animation: rise .4s var(--ease) both;
+}
+.card-head {
+  padding: 1rem 1.5rem; border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: space-between; gap: .75rem;
+}
+.card-head h2 { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: var(--sub); }
+.card-body { padding: 1.5rem; }
+
+.btn { border: none; border-radius: 9px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all .18s; }
+.btn-primary { background: var(--navy); color: #fff; padding: .68rem 1.35rem; font-size: .9rem; }
+.btn-primary:hover { background: var(--blue); transform: translateY(-1px); }
+.btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--line); padding: .58rem 1.1rem; font-size: .875rem; }
+.btn-ghost:hover { border-color: var(--navy); color: var(--navy); }
+.btn-pine { background: var(--pine); color: #fff; padding: .32rem .7rem; font-size: .72rem; }
+.btn-pine:hover { opacity: .88; }
+.btn-outline { background: transparent; color: var(--sub); border: 1px solid var(--line); padding: .32rem .7rem; font-size: .72rem; }
+.btn-outline:hover { border-color: var(--navy); color: var(--navy); }
+.btn-sm { padding: .3rem .65rem; font-size: .72rem; font-weight: 700; border-radius: 6px; cursor: pointer; font-family: inherit; }
+
+.pill { display: inline-block; padding: .18rem .55rem; border-radius: 20px; font-size: .63rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+.pill-draft     { background: var(--line); color: var(--sub); }
+.pill-pending   { background: #fdecef; color: var(--danger); }
+.pill-submitted { background: #fff5d8; color: var(--gold); }
+.pill-batched   { background: #fff5d8; color: var(--gold); }
+.pill-confirmed { background: #e2f2e8; color: var(--pine); }
+.pill-settled   { background: #e2f2e8; color: var(--pine); }
+.pill-failed    { background: #fdecef; color: var(--danger); }
+.pill-reversed  { background: var(--line); color: var(--sub); }
+
+.toast {
+  position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+  background: var(--night); color: #fff;
+  padding: .75rem 1.25rem; border-radius: 10px;
+  opacity: 0; transition: opacity .2s;
+  pointer-events: none; z-index: 200;
+  font-size: .875rem; font-weight: 500;
+  box-shadow: 0 8px 24px rgba(0,0,0,.3);
+}
+.toast.show { opacity: 1; }
+
+.empty-msg { text-align: center; padding: 2rem 1rem; color: var(--sub); font-size: .875rem; }
+.mb-card { margin-bottom: 1.5rem; }

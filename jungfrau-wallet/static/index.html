@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Jungfrau Pass — Welcome</title>
+<style>
+:root{
+  --swiss-red:#dc0018;
+  --ink:#102a43;
+  --ink-2:#1f3a55;
+  --muted:#60758a;
+  --glass:rgba(255,255,255,.74);
+  --glass-strong:rgba(255,255,255,.88);
+  --line:rgba(118,143,166,.22);
+  --blue:#245b7f;
+  --blue-2:#0f3a5b;
+  --pine:#24704d;
+  --gold:#d99b2b;
+  --shadow:0 18px 55px rgba(32,66,92,.14);
+  --soft-shadow:0 12px 30px rgba(32,66,92,.10);
+  --radius:24px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  color:var(--ink);
+  min-height:100vh;
+  background:
+    radial-gradient(circle at 13% 8%,rgba(255,255,255,.92) 0 16%,transparent 30%),
+    linear-gradient(180deg,rgba(210,229,242,.92),rgba(246,250,252,.94) 42%,rgba(247,249,251,.98)),
+    #eef5fa;
+  line-height:1.5;
+  overflow-x:hidden;
+}
+body::before{
+  content:"";position:fixed;inset:0;z-index:-3;
+  background:
+    linear-gradient(180deg,rgba(235,246,255,.42) 0%,rgba(246,250,252,.88) 70%),
+    url('/images/jungfrau-panorama.jpg');
+  background-size:cover;background-position:center 35%;transform:scale(1.02);
+}
+body::after{
+  content:"";position:fixed;inset:0;z-index:-2;backdrop-filter:blur(4px);
+  background:
+    linear-gradient(90deg,rgba(246,250,252,.95) 0 36%,rgba(246,250,252,.74) 62%,rgba(246,250,252,.42)),
+    radial-gradient(circle at 78% 28%,rgba(255,255,255,.26),transparent 28%);
+}
+a{color:inherit}
+button,input,select{font:inherit}
+button,.interactive{transition:transform .22s ease,box-shadow .22s ease,background .22s ease}
+button:hover,.interactive:hover{transform:translateY(-2px);box-shadow:0 22px 55px rgba(32,66,92,.18)}
+button:active{transform:translateY(0) scale(.99)}
+.app-shell{
+  width:min(1460px,calc(100% - 36px));
+  margin:18px auto 32px;
+  border:1px solid rgba(255,255,255,.72);
+  border-radius:30px;
+  overflow:hidden;
+  background:linear-gradient(135deg,rgba(255,255,255,.72),rgba(255,255,255,.44));
+  box-shadow:0 25px 80px rgba(20,55,82,.16);
+  min-height:calc(100vh - 50px);
+}
+.topbar{
+  height:76px;display:flex;align-items:center;justify-content:space-between;gap:20px;
+  padding:0 32px;border-bottom:1px solid rgba(255,255,255,.45);
+  background:rgba(244,250,255,.56);backdrop-filter:blur(18px);
+}
+.brand{
+  display:flex;align-items:center;gap:12px;min-width:max-content;
+  letter-spacing:.22em;font-weight:800;text-transform:uppercase;color:var(--blue-2);
+}
+.logo-mark{width:48px;height:36px;display:inline-grid;place-items:center}
+.logo-mark svg{width:48px;height:36px}
+.swiss{
+  width:24px;height:24px;border-radius:6px;background:var(--swiss-red);
+  display:inline-grid;place-items:center;box-shadow:0 10px 20px rgba(220,0,24,.18)
+}
+.swiss::before{content:"✚";color:white;font-size:16px;line-height:1;font-weight:900}
+.top-actions{display:flex;align-items:center;gap:12px;min-width:max-content}
+.weather{display:flex;align-items:center;gap:8px;color:var(--blue-2);font-weight:700;font-size:.9rem}
+.weather span{display:block;font-size:.72rem;color:var(--muted);font-weight:600;margin-top:-3px}
+.status-badge{
+  padding:8px 16px;border-radius:999px;
+  background:rgba(36,112,77,.12);color:var(--pine);
+  font-size:.8rem;font-weight:800;display:flex;align-items:center;gap:7px;
+  border:1px solid rgba(36,112,77,.18);
+}
+.status-badge::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--pine)}
+.card,.glass-card{
+  background:var(--glass);
+  border:1px solid rgba(255,255,255,.72);
+  box-shadow:var(--shadow);
+  backdrop-filter:blur(18px);
+  border-radius:var(--radius);
+}
+.card{padding:22px}
+.btn{
+  appearance:none;border:0;cursor:pointer;border-radius:15px;padding:12px 22px;
+  min-height:44px;font-weight:850;display:inline-flex;align-items:center;
+  justify-content:center;gap:10px;white-space:nowrap;font-size:.94rem;
+}
+.btn-blue{color:white;background:linear-gradient(135deg,var(--blue),var(--blue-2));box-shadow:0 14px 28px rgba(36,91,127,.20)}
+.eyebrow{margin:0;font-size:.78rem;text-transform:uppercase;letter-spacing:.16em;color:#6d8294;font-weight:850}
+.soft-enter{animation:softEnter .62s cubic-bezier(.2,.75,.25,1) both}
+.soft-enter-2{animation:softEnter .62s .14s cubic-bezier(.2,.75,.25,1) both}
+.soft-enter-3{animation:softEnter .62s .28s cubic-bezier(.2,.75,.25,1) both}
+.soft-enter-4{animation:softEnter .62s .42s cubic-bezier(.2,.75,.25,1) both}
+@keyframes softEnter{
+  from{opacity:0;transform:translateY(18px) scale(.985);filter:blur(4px)}
+  to{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}
+}
+@media(max-width:900px){
+  .app-shell{width:100%;margin:0;border-radius:0}
+  .topbar{height:auto;min-height:72px;padding:18px;flex-direction:column;align-items:flex-start}
+  .top-actions{width:100%;justify-content:space-between}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+
+/* Welcome-specific */
+.welcome-main{
+  min-height:calc(100vh - 76px);
+  display:grid;place-items:center;
+  padding:46px 32px;
+}
+.welcome-hero{width:min(1180px,100%);display:grid;gap:28px}
+.intro-card{
+  padding:40px;display:grid;
+  grid-template-columns:1fr auto;
+  gap:32px;align-items:center;
+  position:relative;overflow:hidden;
+}
+.intro-card::before{
+  content:"";position:absolute;
+  inset:auto -60px -80px auto;
+  width:440px;height:240px;opacity:.15;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 700 320'%3E%3Cpath d='M0 285 L130 110 L210 190 L325 35 L435 210 L525 115 L700 285Z' fill='%23245b7f'/%3E%3Cpath d='M130 110 L172 162 L210 190 L325 35 L383 127 L435 210 L525 115 L580 170' stroke='white' stroke-width='28' fill='none' opacity='.72'/%3E%3C/svg%3E") center/contain no-repeat;
+  pointer-events:none;
+}
+.welcome-title{
+  margin:0;
+  font-size:clamp(2.4rem,6vw,5.2rem);
+  line-height:.95;letter-spacing:-.075em;color:var(--blue-2);
+}
+.welcome-subtitle{
+  margin:18px 0 0;max-width:600px;
+  color:var(--muted);font-size:1.08rem;line-height:1.7;
+}
+.trust-strip{
+  display:flex;gap:22px;margin-top:28px;flex-wrap:wrap;
+}
+.trust-item{
+  display:flex;align-items:center;gap:8px;color:var(--muted);font-size:.86rem;font-weight:700;
+}
+.trust-item::before{content:"✓";width:20px;height:20px;border-radius:50%;background:rgba(36,112,77,.12);color:var(--pine);display:inline-flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:900;flex-shrink:0}
+.pass-visual{
+  width:220px;height:138px;border-radius:22px;flex-shrink:0;
+  background:
+    linear-gradient(135deg,rgba(16,42,67,.85),rgba(36,91,127,.92)),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 440 260'%3E%3Cpath d='M0 200 L70 105 L115 145 L185 45 L250 155 L310 80 L440 200Z' fill='rgba(255,255,255,.18)'/%3E%3Cpath d='M0 240 C90 205 160 220 260 185 C360 148 420 165 440 155 V260 H0Z' fill='rgba(124,168,93,.35)'/%3E%3C/svg%3E") center/cover;
+  display:flex;flex-direction:column;justify-content:space-between;
+  padding:18px;box-shadow:0 24px 60px rgba(16,42,67,.28);
+  border:1px solid rgba(255,255,255,.18);position:relative;overflow:hidden;
+}
+.pass-visual::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.08),transparent 40%);
+}
+.pass-wordmark{
+  font-size:.68rem;letter-spacing:.25em;text-transform:uppercase;
+  color:rgba(255,255,255,.75);font-weight:800;
+}
+.pass-number{
+  font-family:"SFMono-Regular",Consolas,monospace;
+  font-size:.78rem;color:rgba(255,255,255,.6);letter-spacing:.12em;
+}
+.pass-logo{
+  position:absolute;right:18px;top:18px;
+  width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.15);
+  display:grid;place-items:center;font-size:1.1rem;border:1px solid rgba(255,255,255,.2);
+}
+.role-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:20px;
+}
+.role-card{
+  padding:28px;min-height:280px;text-decoration:none;color:var(--ink);
+  display:flex;flex-direction:column;justify-content:space-between;
+  position:relative;overflow:hidden;
+}
+.role-card::before{
+  content:"";position:absolute;inset:0;opacity:.45;
+  background:radial-gradient(circle at 84% 18%,rgba(255,255,255,.88),transparent 28%);
+  pointer-events:none;
+}
+.role-card:hover{transform:translateY(-4px);box-shadow:0 32px 80px rgba(20,55,82,.2)}
+.role-icon{
+  width:60px;height:60px;border-radius:20px;display:grid;place-items:center;
+  font-size:1.75rem;background:rgba(255,255,255,.74);
+  border:1px solid rgba(255,255,255,.8);box-shadow:var(--soft-shadow);
+}
+.role-card h2{margin:22px 0 8px;font-size:1.5rem;letter-spacing:-.04em;color:var(--blue-2)}
+.role-card p{margin:0;color:var(--muted);font-size:.92rem;line-height:1.6}
+.role-tag{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;
+  padding:4px 10px;border-radius:999px;margin-bottom:8px;
+}
+.tag-guest{background:#eaf3fb;color:#24638c}
+.tag-partner{background:#e8f5ee;color:#1f7a4a}
+.tag-admin{background:#fff1dc;color:#b96c00}
+.role-footer{
+  display:flex;align-items:center;justify-content:space-between;margin-top:24px;
+  padding-top:16px;border-top:1px solid var(--line);
+  font-weight:900;color:var(--blue);font-size:.9rem;
+}
+.stats-strip{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;
+}
+.stat-mini{
+  padding:18px 22px;display:flex;flex-direction:column;gap:4px;
+}
+.stat-mini .val{font-size:1.55rem;font-weight:950;letter-spacing:-.04em;color:var(--blue-2)}
+.stat-mini .lbl{font-size:.75rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.1em}
+@media(max-width:1060px){
+  .intro-card{grid-template-columns:1fr}
+  .pass-visual{display:none}
+  .role-grid{grid-template-columns:1fr 1fr}
+  .stats-strip{grid-template-columns:1fr 1fr}
+}
+@media(max-width:620px){
+  .welcome-main{padding:20px 16px}
+  .intro-card{padding:24px}
+  .role-grid{grid-template-columns:1fr}
+  .stats-strip{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 96 60" fill="none"><path d="M5 48 30 19l14 16L61 7l30 41H5Z" stroke="#123a56" stroke-width="6" stroke-linejoin="round"/><path d="m30 19 10 13 4 3 17-28 10 17" stroke="#fff" stroke-width="5" stroke-linecap="round"/></svg>
+      </span>
+      <span class="swiss" aria-hidden="true"></span>
+      <span>Jungfrau Pass</span>
+    </div>
+    <div class="top-actions">
+      <div class="weather">☀️ 12°C <span>Grindelwald</span></div>
+      <div class="status-badge">System operational</div>
+    </div>
+  </header>
+
+  <main class="welcome-main">
+    <div class="welcome-hero">
+
+      <div class="intro-card glass-card soft-enter">
+        <div>
+          <div class="eyebrow">Jungfrau Region Digital Pass</div>
+          <h1 class="welcome-title">One pass,<br>three spaces.</h1>
+          <p class="welcome-subtitle">
+            The Jungfrau Pass connects guests, local partners, and administrators on a single platform.
+            Choose your role below — each space is fully isolated.
+          </p>
+          <div class="trust-strip">
+            <div class="trust-item">ISO 20022 settlement</div>
+            <div class="trust-item">60-second QR tokens</div>
+            <div class="trust-item">Instant partner payouts</div>
+            <div class="trust-item">Swiss-hosted infrastructure</div>
+          </div>
+        </div>
+        <div class="pass-visual" aria-hidden="true">
+          <div>
+            <div class="pass-wordmark">Jungfrau Pass</div>
+            <div class="pass-logo">🏔️</div>
+          </div>
+          <div style="color:rgba(255,255,255,.9);font-weight:900;font-size:1.1rem;letter-spacing:-.02em">Digital<br>Tourism Wallet</div>
+          <div class="pass-number">JFR · 2026 · DEMO</div>
+        </div>
+      </div>
+
+      <div class="role-grid">
+        <a class="role-card glass-card soft-enter-2" href="/guest">
+          <div>
+            <span class="role-tag tag-guest">Tourist</span>
+            <div class="role-icon">🎟️</div>
+            <h2>Guest Wallet</h2>
+            <p>View your balance, access free entitlements, discover paid offers, and generate QR codes for instant redemption at partners.</p>
+          </div>
+          <div class="role-footer">
+            <span>Enter guest area</span>
+            <span>→</span>
+          </div>
+        </a>
+
+        <a class="role-card glass-card soft-enter-3" href="/partner">
+          <div>
+            <span class="role-tag tag-partner">Business</span>
+            <div class="role-icon">🤝</div>
+            <h2>Partner Console</h2>
+            <p>Scan guest QR codes, confirm redemptions, track revenue, and monitor your payout status from pending through to settled.</p>
+          </div>
+          <div class="role-footer">
+            <span>Enter partner area</span>
+            <span>→</span>
+          </div>
+        </a>
+
+        <a class="role-card glass-card soft-enter-4" href="/admin">
+          <div>
+            <span class="role-tag tag-admin">Internal</span>
+            <div class="role-icon">🏦</div>
+            <h2>Admin Dashboard</h2>
+            <p>Run batch settlements, generate ISO 20022 pain.001 files, confirm bank payouts, and manage the full settlement lifecycle.</p>
+          </div>
+          <div class="role-footer">
+            <span>Enter admin area</span>
+            <span>→</span>
+          </div>
+        </a>
+      </div>
+
+      <div class="stats-strip soft-enter-4">
+        <div class="stat-mini glass-card">
+          <div class="val">CHF 440k+</div>
+          <div class="lbl">Settled this season</div>
+        </div>
+        <div class="stat-mini glass-card">
+          <div class="val">5 partners</div>
+          <div class="lbl">Jungfrau region</div>
+        </div>
+        <div class="stat-mini glass-card">
+          <div class="val">60 s</div>
+          <div class="lbl">QR token lifetime</div>
+        </div>
+        <div class="stat-mini glass-card">
+          <div class="val">pain.001</div>
+          <div class="lbl">Bank-ready export</div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+</body>
+</html>

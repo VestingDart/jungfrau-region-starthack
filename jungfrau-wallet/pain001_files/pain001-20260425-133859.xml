@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.001.09">
+  <CstmrCdtTrfInitn>
+    <GrpHdr>
+      <MsgId>JFR-RUN-20260425133859</MsgId>
+      <CreDtTm>2026-04-25T13:38:59+00:00</CreDtTm>
+      <NbOfTxs>1</NbOfTxs>
+      <CtrlSum>140.00</CtrlSum>
+      <InitgPty>
+        <Nm>Jungfrau Region Tourismus AG</Nm>
+      </InitgPty>
+    </GrpHdr>
+    <PmtInf>
+      <PmtInfId>JFR-PMT-20260425</PmtInfId>
+      <PmtMtd>TRF</PmtMtd>
+      <NbOfTxs>1</NbOfTxs>
+      <CtrlSum>140.00</CtrlSum>
+      <PmtTpInf>
+        <SvcLvl>
+          <Cd>SEPA</Cd>
+        </SvcLvl>
+      </PmtTpInf>
+      <ReqdExctnDt>
+        <Dt>2026-04-25</Dt>
+      </ReqdExctnDt>
+      <Dbtr>
+        <Nm>Jungfrau Region Tourismus AG</Nm>
+      </Dbtr>
+      <DbtrAcct>
+        <Id>
+          <IBAN>CH9300762011623852957</IBAN>
+        </Id>
+      </DbtrAcct>
+      <DbtrAgt>
+        <FinInstnId>
+          <BICFI>POFICHBEXXX</BICFI>
+        </FinInstnId>
+      </DbtrAgt>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>JFR-202604-35EFED</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="CHF">140.00</InstdAmt>
+        </Amt>
+        <CdtrAgt>
+          <FinInstnId>
+            <BICFI>POFICHBEXXX</BICFI>
+          </FinInstnId>
+        </CdtrAgt>
+        <Cdtr>
+          <Nm>Outdoor Interlaken</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>CH9300762011623852957</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>JFR redemptions 2020-01-01 to 2099-12-31, 1 txn(s), ref JFR-202604-35EFED</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+    </PmtInf>
+  </CstmrCdtTrfInitn>
+</Document>
