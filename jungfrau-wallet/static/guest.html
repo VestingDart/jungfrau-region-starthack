@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Jungfrau Wallet — Guest</title>
+<style>
+  :root {
+    --red: #DC0018;       /* Swiss red */
+    --ink: #0E141B;
+    --sub: #5A6470;
+    --bg: #F4F5F7;
+    --card: #ffffff;
+    --line: #E3E6EA;
+    --green: #1F8A4C;
+    --gold: #B8860B;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: -apple-system, system-ui, "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--ink); line-height: 1.5;
+  }
+  header {
+    background: var(--ink); color: white; padding: 1rem 1.5rem;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  header h1 { margin: 0; font-size: 1.1rem; font-weight: 600; }
+  .badge { background: var(--red); color: white; padding: 0.15rem 0.5rem;
+           border-radius: 4px; font-size: 0.75rem; }
+  main { max-width: 600px; margin: 0 auto; padding: 1.5rem; }
+  .card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem;
+  }
+  .balance {
+    background: linear-gradient(135deg, #0E141B 0%, #2A3540 100%);
+    color: white; padding: 1.5rem; border-radius: 12px;
+    text-align: center; margin-bottom: 1rem;
+  }
+  .balance .amount { font-size: 2.5rem; font-weight: 700; }
+  .balance .label { opacity: 0.7; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  h2 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em;
+       color: var(--sub); margin: 0 0 0.75rem; font-weight: 600; }
+  .offer {
+    border: 1px solid var(--line); border-radius: 8px; padding: 0.85rem;
+    margin-bottom: 0.5rem; display: flex; justify-content: space-between;
+    align-items: center; gap: 0.5rem;
+  }
+  .offer .info { flex: 1; }
+  .offer .title { font-weight: 600; font-size: 0.95rem; }
+  .offer .partner { color: var(--sub); font-size: 0.8rem; }
+  .offer .descr { color: var(--sub); font-size: 0.8rem; margin-top: 0.25rem; }
+  .price { font-weight: 600; color: var(--ink); font-size: 0.95rem; }
+  .price.free { color: var(--green); }
+  button {
+    background: var(--red); color: white; border: 0; padding: 0.5rem 1rem;
+    border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.85rem;
+  }
+  button:hover { opacity: 0.9; }
+  button.secondary { background: var(--ink); }
+  button.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+  input, select {
+    border: 1px solid var(--line); padding: 0.5rem 0.75rem;
+    border-radius: 6px; font-size: 0.9rem; width: 100%;
+  }
+  .row { display: flex; gap: 0.5rem; align-items: center; }
+  .qr-modal {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    display: none; align-items: center; justify-content: center; z-index: 100;
+    padding: 1rem;
+  }
+  .qr-modal.show { display: flex; }
+  .qr-box {
+    background: white; border-radius: 16px; padding: 1.5rem;
+    text-align: center; max-width: 420px; width: 100%;
+  }
+  .qr-img { width: 280px; height: 280px; margin: 1rem auto;
+            border: 8px solid white; border-radius: 8px; display: block; }
+  .countdown { color: var(--red); font-weight: 600; font-size: 1.1rem; }
+  .token-text {
+    font-family: ui-monospace, monospace; font-size: 0.7rem;
+    background: var(--bg); padding: 0.5rem; border-radius: 4px;
+    word-break: break-all; max-height: 80px; overflow: auto;
+    color: var(--sub); margin-top: 0.5rem;
+  }
+  .empty { color: var(--sub); font-size: 0.85rem; text-align: center; padding: 1rem; }
+  .toast {
+    position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: white; padding: 0.75rem 1.25rem;
+    border-radius: 8px; opacity: 0; transition: opacity 0.2s;
+    pointer-events: none; max-width: 90%;
+  }
+  .toast.show { opacity: 1; }
+  .tx-list { font-size: 0.85rem; }
+  .tx { display: flex; justify-content: space-between; padding: 0.4rem 0;
+        border-bottom: 1px solid var(--line); }
+  .tx:last-child { border-bottom: 0; }
+  .tx .amt.in { color: var(--green); }
+  .tx .amt.out { color: var(--red); }
+  select#guestSelect { max-width: 280px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🏔️ Jungfrau Wallet <span class="badge">Demo</span></h1>
+  <div>
+    <a href="/partner" style="color: white; text-decoration: none; font-size: 0.85rem;">Partner →</a>
+  </div>
+</header>
+
+<main>
+  <div class="card">
+    <div class="row">
+      <select id="guestSelect" onchange="loadWallet()"></select>
+      <button class="ghost" onclick="loadWallet()">↻</button>
+    </div>
+  </div>
+
+  <div class="balance">
+    <div class="label">Wallet balance</div>
+    <div class="amount" id="balance">CHF 0.00</div>
+    <div class="row" style="justify-content: center; margin-top: 1rem; gap: 0.5rem;">
+      <input id="topupAmount" type="number" value="200" min="10" step="10"
+             style="width: 100px; color: var(--ink);" />
+      <button onclick="topup()">Top up via TWINT</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Your entitlements (free)</h2>
+    <div id="entitlements"></div>
+  </div>
+
+  <div class="card">
+    <h2>Available to buy from wallet</h2>
+    <div id="pricedOffers"></div>
+  </div>
+
+  <div class="card">
+    <h2>Recent activity</h2>
+    <div class="tx-list" id="txList"></div>
+  </div>
+</main>
+
+<div class="qr-modal" id="qrModal" onclick="closeModal(event)">
+  <div class="qr-box" onclick="event.stopPropagation()">
+    <h3 id="qrTitle" style="margin: 0 0 0.5rem;">Show this to the partner</h3>
+    <p style="color: var(--sub); font-size: 0.85rem; margin: 0;">
+      Expires in <span class="countdown" id="countdown">60</span>s
+    </p>
+    <img class="qr-img" id="qrImg" alt="QR code" />
+    <p style="font-size: 0.75rem; color: var(--sub); margin: 0.5rem 0 0;">
+      Or copy the token (for demo without a camera):
+    </p>
+    <div class="token-text" id="qrTokenText"></div>
+    <button class="ghost" style="margin-top: 0.75rem;" onclick="copyToken()">Copy token</button>
+    <button onclick="closeModal()" style="margin-top: 0.5rem;">Close</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let currentGuestId = null;
+let currentToken = null;
+let countdownTimer = null;
+
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2400);
+}
+
+async function api(path, options = {}) {
+  options.headers = options.headers || {};
+  options.headers["Content-Type"] = "application/json";
+  if (options.body && typeof options.body === "object") {
+    options.body = JSON.stringify(options.body);
+  }
+  const r = await fetch(path, options);
+  if (!r.ok) {
+    const txt = await r.text();
+    throw new Error(`${r.status}: ${txt}`);
+  }
+  return r.json();
+}
+
+async function loadGuests() {
+  // No guest-list endpoint by design (privacy) - we read from seed via /api/health stub
+  // For the demo, hard-code the two seeded guests' card IDs and look up.
+  const candidates = ["JFR-2026-A0001", "JFR-2026-A0002"];
+  const sel = document.getElementById("guestSelect");
+  sel.innerHTML = "";
+  for (const cardId of candidates) {
+    try {
+      const r = await fetch("/api/checkin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          guest_card_id: cardId,
+          check_in: "2026-04-25",
+          check_out: "2026-04-29",
+        }),
+      });
+      if (r.ok) {
+        const data = await r.json();
+        const opt = document.createElement("option");
+        opt.value = data.guest.id;
+        opt.textContent = `${data.guest.guest_card_id} (${data.guest.email || "guest"})`;
+        sel.appendChild(opt);
+      }
+    } catch (e) { /* skip */ }
+  }
+  if (sel.options.length > 0) {
+    currentGuestId = sel.options[0].value;
+    sel.value = currentGuestId;
+    loadWallet();
+  }
+}
+
+async function loadWallet() {
+  currentGuestId = document.getElementById("guestSelect").value;
+  if (!currentGuestId) return;
+  const w = await api(`/api/wallet/${currentGuestId}`);
+
+  document.getElementById("balance").textContent = `CHF ${w.balance_chf.toFixed(2)}`;
+
+  // Entitlements
+  const eDiv = document.getElementById("entitlements");
+  if (w.entitlements.length === 0) {
+    eDiv.innerHTML = '<div class="empty">All entitlements have been used</div>';
+  } else {
+    eDiv.innerHTML = w.entitlements.map(e => `
+      <div class="offer">
+        <div class="info">
+          <div class="title">${escapeHtml(e.title)}</div>
+          <div class="partner">${escapeHtml(e.partner_name)}</div>
+        </div>
+        <span class="price free">FREE</span>
+        <button onclick="generateQR('${e.id}', null)">Use</button>
+      </div>
+    `).join("");
+  }
+
+  // Priced offers
+  const pDiv = document.getElementById("pricedOffers");
+  if (w.available_priced_offers.length === 0) {
+    pDiv.innerHTML = '<div class="empty">No priced offers</div>';
+  } else {
+    pDiv.innerHTML = w.available_priced_offers.map(o => {
+      const chf = (o.partner_payout_rappen / 100).toFixed(2);
+      const affordable = w.balance_chf >= (o.partner_payout_rappen / 100);
+      return `
+        <div class="offer">
+          <div class="info">
+            <div class="title">${escapeHtml(o.title)}</div>
+            <div class="partner">${escapeHtml(o.partner_name)}</div>
+            <div class="descr">${escapeHtml(o.description || "")}</div>
+          </div>
+          <span class="price">CHF ${chf}</span>
+          <button onclick="generateQR(null, '${o.id}')" ${affordable ? "" : "disabled style='opacity:0.4'"}>
+            ${affordable ? "Buy" : "Top up"}
+          </button>
+        </div>
+      `;
+    }).join("");
+  }
+
+  // Recent transactions
+  const txDiv = document.getElementById("txList");
+  if (w.recent_transactions.length === 0) {
+    txDiv.innerHTML = '<div class="empty">No activity yet</div>';
+  } else {
+    txDiv.innerHTML = w.recent_transactions.slice(0, 10).map(t => {
+      const amt = t.amount_rappen / 100;
+      const sign = amt >= 0 ? "+" : "";
+      const cls = amt >= 0 ? "in" : "out";
+      const date = new Date(t.created_at).toLocaleString("en-CH", { dateStyle: "short", timeStyle: "short" });
+      return `<div class="tx">
+        <div><strong>${t.type}</strong> · <span style="color:var(--sub)">${date}</span></div>
+        <div class="amt ${cls}">${sign}CHF ${amt.toFixed(2)}</div>
+      </div>`;
+    }).join("");
+  }
+}
+
+async function topup() {
+  const amount = parseFloat(document.getElementById("topupAmount").value);
+  if (!amount || amount <= 0) return toast("Invalid amount");
+  try {
+    const r = await api(`/api/wallet/${currentGuestId}/topup`, {
+      method: "POST",
+      headers: { "Idempotency-Key": "topup-" + Date.now() },
+      body: { amount_chf: amount, payment_method: "twint" },
+    });
+    // Open mock-pay in a new tab
+    window.open(r.checkout_url, "_blank", "width=480,height=400");
+    toast("Complete payment in the popup, then refresh");
+  } catch (e) {
+    toast("Top-up failed: " + e.message);
+  }
+}
+
+async function generateQR(entitlement_id, offer_id) {
+  try {
+    const body = entitlement_id
+      ? { guest_id: currentGuestId, entitlement_id }
+      : { guest_id: currentGuestId, offer_id };
+    const r = await api("/api/qr/generate", { method: "POST", body });
+    showQR(r.qr_token, r.expires_in_seconds);
+  } catch (e) {
+    toast("QR gen failed: " + e.message);
+  }
+}
+
+function showQR(token, ttl) {
+  currentToken = token;
+  document.getElementById("qrTokenText").textContent = token;
+  // Use a public QR render for the demo. Production would render locally.
+  const qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=" +
+                encodeURIComponent(token);
+  document.getElementById("qrImg").src = qrUrl;
+  document.getElementById("qrModal").classList.add("show");
+
+  let secs = ttl;
+  document.getElementById("countdown").textContent = secs;
+  if (countdownTimer) clearInterval(countdownTimer);
+  countdownTimer = setInterval(() => {
+    secs--;
+    document.getElementById("countdown").textContent = secs;
+    if (secs <= 0) {
+      clearInterval(countdownTimer);
+      closeModal();
+      toast("QR expired - generate a new one");
+      loadWallet();
+    }
+  }, 1000);
+}
+
+function closeModal(e) {
+  if (e && e.target.id !== "qrModal") return;
+  document.getElementById("qrModal").classList.remove("show");
+  if (countdownTimer) clearInterval(countdownTimer);
+  loadWallet();
+}
+
+function copyToken() {
+  navigator.clipboard.writeText(currentToken).then(() => toast("Token copied"));
+}
+
+function escapeHtml(s) {
+  return (s || "").replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  })[c]);
+}
+
+loadGuests();
+</script>
+</body>
+</html>

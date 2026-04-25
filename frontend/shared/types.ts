@@ -24,3 +24,28 @@ export type PassResponse = {
   pass: Pass;
   benefits: Benefit[];
 };
+
+export type Transaction = {
+  id: string;
+  type: 'redemption' | 'deposit' | 'cashback' | 'payment';
+  description: string;
+  partnerName?: string;
+  offerTitle?: string;
+  amountChf: number;
+  at: string;
+};
+
+export type TransactionHistoryResponse = {
+  transactions: Transaction[];
+};
+
+export type RecentTransaction = {
+  description: string;
+  amountChf: number;
+  at: string;
+};
+
+export type BalanceResponse = {
+  balanceChf: number;
+  recentTransaction: RecentTransaction | null;
+};
