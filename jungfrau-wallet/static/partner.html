@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Jungfrau Wallet — Partner</title>
+<style>
+  :root {
+    --red: #DC0018; --ink: #0E141B; --sub: #5A6470;
+    --bg: #F4F5F7; --card: #ffffff; --line: #E3E6EA;
+    --green: #1F8A4C; --gold: #B8860B;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, system-ui, "Segoe UI", sans-serif;
+         background: var(--bg); color: var(--ink); line-height: 1.5; }
+  header { background: var(--ink); color: white; padding: 1rem 1.5rem;
+           display: flex; align-items: center; justify-content: space-between; }
+  header h1 { margin: 0; font-size: 1.1rem; font-weight: 600; }
+  .badge { background: var(--gold); color: white; padding: 0.15rem 0.5rem;
+           border-radius: 4px; font-size: 0.75rem; }
+  main { max-width: 700px; margin: 0 auto; padding: 1.5rem; }
+  .card { background: var(--card); border: 1px solid var(--line);
+          border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+  h2 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em;
+       color: var(--sub); margin: 0 0 0.75rem; font-weight: 600; }
+  textarea {
+    width: 100%; min-height: 100px; padding: 0.75rem; border: 1px solid var(--line);
+    border-radius: 8px; font-family: ui-monospace, monospace; font-size: 0.75rem;
+    resize: vertical;
+  }
+  button {
+    background: var(--red); color: white; border: 0; padding: 0.6rem 1.25rem;
+    border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.9rem;
+  }
+  button.green { background: var(--green); }
+  button.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+  button.small { padding: 0.3rem 0.6rem; font-size: 0.75rem; }
+  select, input { width: 100%; padding: 0.5rem; border: 1px solid var(--line);
+                  border-radius: 6px; font-size: 0.9rem; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
+  .stat { background: var(--bg); border-radius: 8px; padding: 0.85rem; text-align: center; }
+  .stat .label { font-size: 0.7rem; color: var(--sub); text-transform: uppercase;
+                 letter-spacing: 0.05em; }
+  .stat .val { font-size: 1.4rem; font-weight: 700; margin-top: 0.25rem; }
+  .stat.pending .val { color: var(--red); }
+  .stat.batched .val { color: var(--gold); }
+  .stat.settled .val { color: var(--green); }
+  .result-box {
+    border-radius: 10px; padding: 1rem; margin-top: 0.75rem;
+    border-left: 4px solid var(--green); background: #F1FBF5;
+  }
+  .result-box.error { border-left-color: var(--red); background: #FFF5F5; }
+  .result-box .title { font-weight: 700; font-size: 1.05rem; }
+  .redemption-row {
+    display: flex; justify-content: space-between; padding: 0.6rem 0;
+    border-bottom: 1px solid var(--line); align-items: center; gap: 0.5rem;
+  }
+  .redemption-row:last-child { border-bottom: 0; }
+  .redemption-row .info { flex: 1; min-width: 0; }
+  .redemption-row .title { font-weight: 600; font-size: 0.9rem; }
+  .redemption-row .meta { color: var(--sub); font-size: 0.75rem; }
+  .status-pill {
+    display: inline-block; padding: 0.1rem 0.5rem; border-radius: 12px;
+    font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+  }
+  .pill-pending { background: #FDECEF; color: var(--red); }
+  .pill-batched { background: #FFF5E0; color: var(--gold); }
+  .pill-settled { background: #E0F4E9; color: var(--green); }
+  .pill-reversed { background: var(--line); color: var(--sub); }
+  .empty { color: var(--sub); font-size: 0.85rem; text-align: center; padding: 1rem; }
+  .toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+           background: var(--ink); color: white; padding: 0.75rem 1.25rem;
+           border-radius: 8px; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🛎️ Partner Console <span class="badge">Demo</span></h1>
+  <div>
+    <a href="/" style="color: white; text-decoration: none; font-size: 0.85rem;">← Guest</a>
+    &nbsp; <a href="/admin" style="color: white; text-decoration: none; font-size: 0.85rem;">Admin →</a>
+  </div>
+</header>
+
+<main>
+  <div class="card">
+    <h2>Sign in as partner</h2>
+    <select id="partnerSelect" onchange="loadDashboard()">
+      <option value="key-jungfraubahnen">Jungfraubahnen</option>
+      <option value="key-baeckerei">Bäckerei Müller Grindelwald</option>
+      <option value="key-outdoor">Outdoor Interlaken</option>
+      <option value="key-skirental">Wengen Ski Rental</option>
+      <option value="key-bergblick">Restaurant Bergblick Mürren</option>
+    </select>
+  </div>
+
+  <div class="card">
+    <h2>Scan / paste guest QR</h2>
+    <textarea id="qrInput" placeholder="Paste the QR token here (the long JWT string from the guest's wallet)"></textarea>
+    <div style="margin-top: 0.75rem; display: flex; gap: 0.5rem;">
+      <button class="green" onclick="redeem()">✓ Redeem</button>
+      <button class="ghost" onclick="document.getElementById('qrInput').value=''">Clear</button>
+    </div>
+    <div id="result"></div>
+  </div>
+
+  <div class="card">
+    <h2>Payout summary</h2>
+    <div class="stats">
+      <div class="stat pending">
+        <div class="label">Pending</div>
+        <div class="val" id="pendingChf">CHF 0.00</div>
+        <div class="label" style="margin-top:0.2rem"><span id="pendingCount">0</span> redemption(s)</div>
+      </div>
+      <div class="stat batched">
+        <div class="label">Batched</div>
+        <div class="val" id="batchedChf">CHF 0.00</div>
+        <div class="label" style="margin-top:0.2rem"><span id="batchedCount">0</span> redemption(s)</div>
+      </div>
+      <div class="stat settled">
+        <div class="label">Settled</div>
+        <div class="val" id="settledChf">CHF 0.00</div>
+        <div class="label" style="margin-top:0.2rem"><span id="settledCount">0</span> redemption(s)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Recent redemptions</h2>
+    <div id="redemptionList"></div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+function partnerKey() { return document.getElementById("partnerSelect").value; }
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2400);
+}
+
+async function api(path, options = {}) {
+  options.headers = options.headers || {};
+  options.headers["Content-Type"] = "application/json";
+  options.headers["X-API-Key"] = partnerKey();
+  if (options.body && typeof options.body === "object") {
+    options.body = JSON.stringify(options.body);
+  }
+  const r = await fetch(path, options);
+  const txt = await r.text();
+  let data;
+  try { data = JSON.parse(txt); } catch (_) { data = { error: txt }; }
+  if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+  return data;
+}
+
+async function redeem() {
+  const token = document.getElementById("qrInput").value.trim();
+  if (!token) return toast("Paste a QR token first");
+  const resultDiv = document.getElementById("result");
+
+  try {
+    const r = await api("/api/redeem", {
+      method: "POST",
+      headers: { "Idempotency-Key": "redeem-" + Date.now() + "-" + Math.random() },
+      body: { qr_token: token },
+    });
+    resultDiv.innerHTML = `
+      <div class="result-box">
+        <div class="title">✓ ${escapeHtml(r.message)}</div>
+        <div style="font-size: 0.8rem; color: var(--sub); margin-top: 0.4rem;">
+          Redemption ID: <code>${r.redemption_id}</code>
+        </div>
+      </div>
+    `;
+    document.getElementById("qrInput").value = "";
+    loadDashboard();
+  } catch (e) {
+    resultDiv.innerHTML = `
+      <div class="result-box error">
+        <div class="title">✗ Rejected</div>
+        <div style="margin-top: 0.4rem; font-size: 0.9rem;">${escapeHtml(e.message)}</div>
+      </div>
+    `;
+  }
+}
+
+async function loadDashboard() {
+  try {
+    const d = await api("/api/partner/dashboard");
+    document.getElementById("pendingChf").textContent = `CHF ${d.pending_chf.toFixed(2)}`;
+    document.getElementById("pendingCount").textContent = d.pending_count;
+    document.getElementById("batchedChf").textContent = `CHF ${d.batched_chf.toFixed(2)}`;
+    document.getElementById("batchedCount").textContent = d.batched_count;
+    document.getElementById("settledChf").textContent = `CHF ${d.settled_chf.toFixed(2)}`;
+    document.getElementById("settledCount").textContent = d.settled_count;
+
+    const rDiv = document.getElementById("redemptionList");
+    if (d.recent_redemptions.length === 0) {
+      rDiv.innerHTML = '<div class="empty">No redemptions yet</div>';
+    } else {
+      rDiv.innerHTML = d.recent_redemptions.map(r => {
+        const status = r.reversed ? "reversed" : (r.settlement_status || "pending");
+        const date = new Date(r.created_at).toLocaleString("en-CH",
+          { dateStyle: "short", timeStyle: "short" });
+        const chf = (r.amount_rappen / 100).toFixed(2);
+        const canRefund = !r.reversed && status === "pending";
+        return `
+          <div class="redemption-row">
+            <div class="info">
+              <div class="title">${escapeHtml(r.offer_title)} <span style="color:var(--sub);font-weight:400">CHF ${chf}</span></div>
+              <div class="meta">${date} · ${r.type}</div>
+            </div>
+            <span class="status-pill pill-${status}">${status}</span>
+            ${canRefund ? `<button class="ghost small" onclick="refund('${r.id}')">Refund</button>` : ''}
+          </div>
+        `;
+      }).join("");
+    }
+  } catch (e) {
+    toast("Dashboard load failed: " + e.message);
+  }
+}
+
+async function refund(redemption_id) {
+  if (!confirm("Reverse this redemption?")) return;
+  try {
+    await api("/api/partner/refund", {
+      method: "POST",
+      headers: { "Idempotency-Key": "refund-" + Date.now() },
+      body: { redemption_id, reason: "manual refund (demo)" },
+    });
+    toast("Refunded");
+    loadDashboard();
+  } catch (e) {
+    toast("Refund failed: " + e.message);
+  }
+}
+
+function escapeHtml(s) {
+  return (s || "").replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  })[c]);
+}
+
+loadDashboard();
+</script>
+</body>
+</html>
