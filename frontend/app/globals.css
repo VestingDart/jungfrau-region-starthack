@@ -2,22 +2,59 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #1a2821;
+  --foreground: #1A1A1A;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-brand: #1D5C3E;
-  --color-brand-dark: #164A31;
-  --color-brand-light: #E6F4EC;
-  --color-brand-border: #9ECFB0;
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-brand: #E2001A;
+  --color-brand-dark: #B50015;
+  --color-surface: #F7F7F8;
+  --color-border: #E5E5E7;
+  --color-text-primary: #1A1A1A;
+  --color-text-secondary: #6B6B6B;
+  --color-text-tertiary: #A0A0A5;
+  --color-success: #0E8A4F;
+  --color-warning: #D97706;
+  --color-pass: #0A0A0A;
+  --font-sans: var(--font-inter);
 }
+
+* { box-sizing: border-box; }
 
 body {
   background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  color: #1A1A1A;
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+
+.tabular { font-variant-numeric: tabular-nums; }
+
+* { transition-property: color, background-color, border-color, opacity; transition-duration: 150ms; }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #E5E5E7; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #A0A0A5; }
+
+#qr-viewport video { width: 100% !important; height: 100% !important; object-fit: cover !important; border-radius: 8px; }
+#qr-viewport canvas { display: none !important; }
+
+.recharts-tooltip-wrapper { outline: none !important; }
+
+@keyframes flash-green {
+  0% { background-color: #dcfce7; }
+  100% { background-color: transparent; }
+}
+.flash-green { animation: flash-green 1s ease-out; }
+
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.slide-down { animation: slide-down 0.3s ease-out; }

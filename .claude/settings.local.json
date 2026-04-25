@@ -11,16 +11,7 @@
       "Bash(taskkill *)",
       "PowerShell(Stop-Process *)",
       "WebFetch(domain:haslital.swiss)",
-      "Bash(git add *)",
-      "Bash(git commit *)",
-      "Bash(git push *)"
-      "Bash(git push *)",
-      "Bash(git checkout *)",
-      "Bash(git merge *)",
-      "Bash(git stash *)",
-      "Bash(git pull *)",
-      "Bash(git rebase *)",
-      "Bash(GIT_EDITOR=true git rebase --continue)"
+      "Bash(git diff *)"
     ]
   }
 }
