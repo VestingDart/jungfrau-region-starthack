@@ -13,6 +13,7 @@
       "WebFetch(domain:haslital.swiss)",
       "Bash(git add *)",
       "Bash(git commit *)",
+      "Bash(git push *)"
       "Bash(git push *)",
       "Bash(git checkout *)",
       "Bash(git merge *)",
