@@ -1,16 +1,18 @@
-import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { getPassById } from '@/lib/seedData';
-import PassView from './PassView';
+import { getSessionUser } from '@/lib/session';
+import GuestDashboard from './GuestDashboard';
+import PartnerDashboard from './PartnerDashboard';
+import AdminDashboard from './AdminDashboard';
 
 export default async function DashboardPage() {
-  const jar = await cookies();
-  const username = jar.get('session')?.value;
+  const user = await getSessionUser();
+  if (!user) redirect('/api/auth/logout');
 
-  if (!username) redirect('/login');
-
-  // TODO: look up pass by logged-in user once backend is ready
-  const data = getPassById('demo-anna')!;
-
-  return <PassView data={data} username={username} />;
+  if (user.role === 'partner') {
+    return <PartnerDashboard username={user.username} partnerName={user.partnerName ?? user.username} apiKey={user.apiKey ?? ''} />;
+  }
+  if (user.role === 'admin') {
+    return <AdminDashboard username={user.username} />;
+  }
+  return <GuestDashboard username={user.username} guestCardId={user.guestCardId ?? null} />;
 }
