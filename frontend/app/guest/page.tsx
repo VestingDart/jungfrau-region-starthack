@@ -173,13 +173,25 @@ export default function GuestPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ guest_card_id: s.cardId, check_in: '2026-04-25', check_out: '2026-04-29' }),
     })
-      .then(r => r.json())
+      .then(async r => {
+        const text = await r.text();
+        try { return JSON.parse(text); } catch { return {}; }
+      })
       .then(d => setGuestId(d.guest?.id || ''))
       .catch(err => console.error('Checkin failed:', err));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => { if (guestId) loadWallet(guestId); }, [guestId]);
+
+  useEffect(() => {
+    function onMessage(e: MessageEvent) {
+      if (e.data === 'topup_complete') loadWallet();
+    }
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [guestId]);
 
   if (authChecking) return null;
 

@@ -15,7 +15,11 @@
       "Bash(npx tsc *)",
       "Bash(xargs ls *)",
       "Bash(npx create-next-app@latest *)",
-      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d['version']\\)\")"
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d['version']\\)\")",
+      "Bash(C:\\\\Users\\\\Finn\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python312\\\\python.exe *)",
+      "PowerShell(& \"C:\\\\Users\\\\Finn\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python312\\\\python.exe\" -m pip install PyJWT)",
+      "PowerShell(& \"C:\\\\Users\\\\Finn\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python312\\\\python.exe\" -m ensurepip --upgrade; & \"C:\\\\Users\\\\Finn\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python312\\\\python.exe\" -m pip install PyJWT)",
+      "PowerShell(& \"C:\\\\Users\\\\Finn\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python312\\\\python.exe\" -m pip install flask PyJWT)"
     ]
   }
 }

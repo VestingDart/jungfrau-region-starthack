@@ -42,6 +42,7 @@ export default function AdminPage() {
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [partners, setPartners] = useState<PartnerRecord[]>([]);
+  const [visiblePasswords, setVisiblePasswords] = useState<Set<string>>(new Set());
   const [showAddPartner, setShowAddPartner] = useState(false);
   const [addName, setAddName] = useState('');
   const [addUsername, setAddUsername] = useState('');
@@ -79,6 +80,14 @@ export default function AdminPage() {
     setShowAddPartner(false);
     setAddName(''); setAddUsername(''); setAddPassword(''); setAddFlaskKey('');
     showToast('Partner added');
+  }
+
+  function togglePasswordVisibility(id: string) {
+    setVisiblePasswords(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
   }
 
   function handleDeletePartner(id: string, name: string) {
@@ -219,18 +228,38 @@ export default function AdminPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '.82rem', minWidth: 600 }}>
                 <thead>
                   <tr>
-                    {['Name', 'Username', 'Category', 'Flask API Key', 'Status', 'Actions'].map(h => (
+                    {['Name', 'Username', 'Password', 'Category', 'Flask API Key', 'Status', 'Actions'].map(h => (
                       <th key={h} style={{ padding: '.65rem .85rem', textAlign: 'left', fontSize: '.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--sub)', background: 'var(--sand)', borderBottom: '2px solid var(--line)' }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {partners.length === 0 ? (
-                    <tr><td colSpan={6} className="empty-msg">No partners yet</td></tr>
-                  ) : partners.map(p => (
+                    <tr><td colSpan={7} className="empty-msg">No partners yet</td></tr>
+                  ) : partners.map(p => {
+                    const pwVisible = visiblePasswords.has(p.id);
+                    return (
                     <tr key={p.id} style={{ borderBottom: '1px solid var(--line)' }}>
                       <td style={{ padding: '.72rem .85rem', fontWeight: 700 }}>{p.name}</td>
                       <td style={{ padding: '.72rem .85rem', fontFamily: 'ui-monospace,monospace', fontSize: '.78rem', color: 'var(--sub)' }}>{p.username}</td>
+                      <td style={{ padding: '.72rem .85rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem' }}>
+                          <span style={{ fontFamily: 'ui-monospace,monospace', fontSize: '.78rem', color: 'var(--sub)', letterSpacing: pwVisible ? 0 : '.08em' }}>
+                            {pwVisible ? p.password : '••••••'}
+                          </span>
+                          <button
+                            onClick={() => togglePasswordVisibility(p.id)}
+                            title={pwVisible ? 'Hide password' : 'Show password'}
+                            style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '.1rem .25rem', color: 'var(--sub)', fontSize: '.75rem', lineHeight: 1 }}
+                          >
+                            {pwVisible ? (
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                            ) : (
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            )}
+                          </button>
+                        </div>
+                      </td>
                       <td style={{ padding: '.72rem .85rem' }}>{CATEGORY_LABELS[p.category] || p.category}</td>
                       <td style={{ padding: '.72rem .85rem' }}><code style={{ fontSize: '.72rem', color: 'var(--sub)' }}>{p.flaskApiKey}</code></td>
                       <td style={{ padding: '.72rem .85rem' }}><span className={`pill pill-${p.status}`}>{p.status}</span></td>
@@ -238,7 +267,8 @@ export default function AdminPage() {
                         <button onClick={() => handleDeletePartner(p.id, p.name)} style={{ background: 'transparent', color: 'var(--danger)', border: '1px solid rgba(197,32,46,.3)', padding: '.25rem .6rem', borderRadius: 6, fontSize: '.72rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Remove</button>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
