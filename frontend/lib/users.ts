@@ -7,6 +7,10 @@ export type User = {
   username: string;
   password: string;
   createdAt: string;
+  role?: 'guest' | 'partner' | 'admin';
+  partnerName?: string;
+  apiKey?: string;
+  guestCardId?: string;
 };
 
 export function readUsers(): User[] {
