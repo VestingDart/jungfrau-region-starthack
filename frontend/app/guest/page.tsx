@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { getSession, clearSession } from '@/lib/auth';
+import type { Session } from '@/lib/auth';
 
 interface Guest {
   id: string;
@@ -45,11 +47,6 @@ interface Wallet {
   recent_transactions: Transaction[];
 }
 
-interface GuestOption {
-  id: string;
-  label: string;
-}
-
 function esc(s: string | null | undefined) {
   return (s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] || c));
 }
@@ -64,7 +61,9 @@ function fmt(d: string) {
 }
 
 export default function GuestPage() {
-  const [guests, setGuests] = useState<GuestOption[]>([]);
+  const router = useRouter();
+  const [authChecking, setAuthChecking] = useState(true);
+  const [session, setSession] = useState<Session | null>(null);
   const [guestId, setGuestId] = useState('');
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [walletOpen, setWalletOpen] = useState(false);
@@ -85,27 +84,17 @@ export default function GuestPage() {
     toastTimer.current = setTimeout(() => setToast(''), 2400);
   }
 
+  function signOut() {
+    clearSession();
+    router.push('/login');
+  }
+
   async function apiFetch(path: string, opts: RequestInit = {}) {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (opts.headers) Object.assign(headers, opts.headers);
     const res = await fetch(path, { ...opts, headers });
     if (!res.ok) { const t = await res.text(); throw new Error(`${res.status}: ${t}`); }
     return res.json();
-  }
-
-  async function loadGuests() {
-    const options: GuestOption[] = [];
-    for (const cardId of ['JFR-2026-A0001', 'JFR-2026-A0002']) {
-      try {
-        const d = await apiFetch('/api/checkin', {
-          method: 'POST',
-          body: JSON.stringify({ guest_card_id: cardId, check_in: '2026-04-25', check_out: '2026-04-29' }),
-        });
-        options.push({ id: d.guest.id, label: `${d.guest.guest_card_id} — ${d.guest.email || 'guest'}` });
-      } catch { /* ignore */ }
-    }
-    setGuests(options);
-    if (options.length) setGuestId(options[0].id);
   }
 
   async function loadWallet(id?: string) {
@@ -174,12 +163,41 @@ export default function GuestPage() {
     navigator.clipboard.writeText(qrToken).then(() => showToast('Token copied'));
   }
 
-  useEffect(() => { loadGuests(); }, []);
+  useEffect(() => {
+    const s = getSession();
+    if (!s || s.role !== 'guest') { router.replace('/login'); return; }
+    setSession(s);
+    setAuthChecking(false);
+    fetch('/api/checkin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ guest_card_id: s.cardId, check_in: '2026-04-25', check_out: '2026-04-29' }),
+    })
+      .then(async r => {
+        const text = await r.text();
+        try { return JSON.parse(text); } catch { return {}; }
+      })
+      .then(d => setGuestId(d.guest?.id || ''))
+      .catch(err => console.error('Checkin failed:', err));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => { if (guestId) loadWallet(guestId); }, [guestId]);
 
+  useEffect(() => {
+    function onMessage(e: MessageEvent) {
+      if (e.data === 'topup_complete') loadWallet();
+    }
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [guestId]);
+
+  if (authChecking) return null;
+
   const g = wallet?.guest;
-  const cardNumber = g?.guest_card_id || 'JFR-2026-A0001';
-  const cbName = g?.email ? g.email.split('@')[0].replace(/\./g, ' ') : 'Guest';
+  const cardNumber = g?.guest_card_id || session?.cardId || 'JFR-2026-A0001';
+  const cbName = session?.name || 'Guest';
   const cbValidity = g ? `Valid: ${fmt(g.check_in)} – ${fmt(g.check_out)}, 2026` : 'Valid: —';
 
   return (
@@ -187,14 +205,8 @@ export default function GuestPage() {
       <nav className="navbar" style={{ position: 'fixed', top: 0, left: 0, right: 0 }}>
         <div className="nav-logo">Jungfrau<em style={{ color: 'var(--gold)' }}>.</em>Wallet</div>
         <div className="nav-sep" />
-        <select
-          value={guestId}
-          onChange={e => setGuestId(e.target.value)}
-          style={{ flex: 1, maxWidth: 260, padding: '.38rem .75rem', background: 'rgba(255,255,255,.07)', border: '1px solid rgba(255,255,255,.13)', borderRadius: 8, color: '#fff', fontSize: '.82rem', cursor: 'pointer', fontFamily: 'inherit' }}
-        >
-          {guests.map(g => <option key={g.id} value={g.id} style={{ background: 'var(--night)' }}>{g.label}</option>)}
-        </select>
         <div className="nav-right">
+          <span style={{ fontSize: '.82rem', color: 'rgba(255,255,255,.65)', fontWeight: 500 }}>Hi, {session?.name}</span>
           <button
             onClick={() => setWalletOpen(o => !o)}
             style={{ display: 'flex', alignItems: 'center', gap: '.5rem', background: 'var(--gold)', color: '#fff', border: 'none', padding: '.42rem 1rem .42rem .75rem', borderRadius: 22, fontWeight: 700, fontSize: '.82rem', cursor: 'pointer', letterSpacing: '.01em', fontFamily: 'inherit' }}
@@ -204,15 +216,19 @@ export default function GuestPage() {
             </svg>
             My Wallet
           </button>
-          <Link className="nav-link" href="/partner">Partner</Link>
-          <Link className="nav-link" href="/admin">Admin</Link>
+          <button
+            onClick={signOut}
+            style={{ background: 'transparent', border: '1px solid rgba(255,255,255,.2)', color: 'rgba(255,255,255,.7)', padding: '.38rem .85rem', borderRadius: 8, fontSize: '.8rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+          >
+            Sign out
+          </button>
         </div>
       </nav>
 
       <section style={{ position: 'relative', height: '85vh', minHeight: 500, backgroundImage: "url('https://picsum.photos/seed/swiss-alps-three-peaks/1920/1080')", backgroundSize: 'cover', backgroundPosition: 'top center', backgroundAttachment: 'fixed', marginTop: 64 }}>
         <div style={{ content: '', position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 0%, transparent 38%, rgba(242,239,232,.55) 65%, rgba(242,239,232,.88) 82%, #F2EFE8 100%)' }} />
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 1, maxWidth: 1200, margin: '0 auto', padding: '2.5rem 2.5rem 3.5rem', color: '#fff' }}>
-          <div style={{ display: 'inline-block', background: 'var(--gold)', color: '#fff', padding: '.18rem .65rem', borderRadius: 4, fontSize: '.62rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.14em', marginBottom: '.85rem' }}>Demo</div>
+          <div style={{ display: 'inline-block', background: 'var(--gold)', color: '#fff', padding: '.18rem .65rem', borderRadius: 4, fontSize: '.62rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.14em', marginBottom: '.85rem' }}>Welcome</div>
           <h1 style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', fontWeight: 900, letterSpacing: '-.03em', lineHeight: 1.06, marginBottom: '.6rem', textShadow: '0 2px 20px rgba(0,0,0,.35)' }}>Welcome to the<br />Jungfrau Region</h1>
           <p style={{ fontSize: '1rem', opacity: .82, maxWidth: 460, lineHeight: 1.65, textShadow: '0 1px 8px rgba(0,0,0,.3)' }}>Your digital guest wallet — exclusive alpine perks, seamless payments, one card.</p>
         </div>

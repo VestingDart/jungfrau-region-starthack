@@ -352,28 +352,177 @@ def mock_pay(topup_id):
     Mock 'TWINT' page. GET shows a form; POST simulates the provider firing
     its webhook with success.
     """
-    if request.method == "GET":
-        return f"""
-        <html><body style="font-family:system-ui;padding:2rem;max-width:480px">
-          <h2>Mock TWINT Payment</h2>
-          <p>Topup id: <code>{topup_id}</code></p>
-          <form method="post">
-            <label>Provider reference: <input name="ref" value="TWINT-{topup_id[:8]}" required></label><br><br>
-            <label>Provider fee (CHF): <input name="fee" value="0.80" type="number" step="0.01"></label><br><br>
-            <button type="submit">Confirm Payment</button>
-          </form>
-        </body></html>
-        """
+    PAGE_STYLE = """
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background: #F2EFE8;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+      }
+      .navbar {
+        position: fixed; top: 0; left: 0; right: 0; height: 56px;
+        background: rgba(14,28,46,.96);
+        display: flex; align-items: center; padding: 0 1.5rem;
+        border-bottom: 1px solid rgba(255,255,255,.07);
+      }
+      .nav-logo { font-size: .88rem; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; color: #fff; }
+      .nav-logo em { font-style: normal; color: #C4950E; }
+      .nav-badge { margin-left: .75rem; padding: .15rem .55rem; background: rgba(196,149,14,.18); color: #C4950E; border-radius: 4px; font-size: .6rem; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; }
+      .card {
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 8px 40px rgba(14,28,46,.14);
+        width: 100%;
+        max-width: 420px;
+        overflow: hidden;
+        margin-top: 56px;
+        animation: rise .35s cubic-bezier(.4,0,.2,1) both;
+      }
+      @keyframes rise { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+      .header {
+        background: linear-gradient(135deg, #0E1C2E 0%, #1B3259 100%);
+        padding: 2rem 2rem 1.75rem;
+        text-align: center;
+        color: #fff;
+      }
+      .logo-line { font-size: .75rem; font-weight: 900; letter-spacing: .18em; text-transform: uppercase; color: rgba(255,255,255,.45); margin-bottom: 1rem; }
+      .header-title { font-size: 1.4rem; font-weight: 900; letter-spacing: -.02em; }
+      .header-sub { font-size: .78rem; color: rgba(255,255,255,.5); margin-top: .3rem; letter-spacing: .03em; }
+      .body { padding: 1.75rem; }
+      .amount-box {
+        background: #F2EFE8;
+        border-radius: 12px;
+        padding: 1.25rem;
+        text-align: center;
+        margin-bottom: 1.5rem;
+        border: 1px solid #DDD9D2;
+      }
+      .amount-label { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #64748B; margin-bottom: .4rem; }
+      .amount-value { font-size: 2.4rem; font-weight: 900; color: #0E1C2E; letter-spacing: -.03em; line-height: 1; }
+      .amount-currency { font-size: 1rem; font-weight: 700; color: #64748B; margin-right: .3rem; vertical-align: super; font-size: 1.1rem; }
+      .field { margin-bottom: 1rem; }
+      .field label { display: block; font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #64748B; margin-bottom: .4rem; }
+      .field input {
+        width: 100%;
+        padding: .72rem 1rem;
+        border: 1.5px solid #DDD9D2;
+        border-radius: 10px;
+        font-size: .88rem;
+        color: #1C1C2E;
+        background: #F2EFE8;
+        transition: border-color .15s, background .15s;
+        font-family: inherit;
+      }
+      .field input:focus { outline: none; border-color: #1B3259; background: #fff; }
+      .ref-hint { font-size: .68rem; color: #94a3b8; margin-top: .3rem; }
+      .btn-pay {
+        width: 100%;
+        padding: .9rem;
+        background: #1B3259;
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        font-size: .95rem;
+        font-weight: 800;
+        cursor: pointer;
+        margin-top: .5rem;
+        transition: background .15s, transform .1s;
+        font-family: inherit;
+        letter-spacing: .01em;
+      }
+      .btn-pay:hover { background: #2D5396; }
+      .btn-pay:active { transform: scale(.98); }
+      .secure-badge {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .35rem;
+        font-size: .68rem;
+        color: #94a3b8;
+        margin-top: 1.1rem;
+      }
+      .footer-note { text-align: center; font-size: .68rem; color: #94a3b8; margin-top: 1rem; font-family: ui-monospace, monospace; }
+    </style>
+    """
 
-    ref = request.form.get("ref", f"TWINT-{topup_id[:8]}")
+    if request.method == "GET":
+        conn = db.get_connection()
+        try:
+            row = conn.execute("SELECT amount_rappen FROM topups WHERE id = ?", (topup_id,)).fetchone()
+            amount_str = f"{row['amount_rappen'] / 100:.2f}" if row else "–.–"
+        finally:
+            conn.close()
+        return f"""<!DOCTYPE html><html><head>{PAGE_STYLE}<title>Top Up · Jungfrau Wallet</title></head><body>
+        <nav class="navbar">
+          <div class="nav-logo">Jungfrau<em>.</em>Wallet</div>
+          <span class="nav-badge">Secure Pay</span>
+        </nav>
+        <div class="card">
+          <div class="header">
+            <div class="logo-line">Jungfrau Region · Payment</div>
+            <div class="header-title">Wallet Top-Up</div>
+            <div class="header-sub">Simulated payment · demo environment</div>
+          </div>
+          <div class="body">
+            <div class="amount-box">
+              <div class="amount-label">Amount to credit</div>
+              <div class="amount-value"><span class="amount-currency">CHF</span>{amount_str}</div>
+            </div>
+            <form method="post">
+              <div class="field">
+                <label>Transaction reference</label>
+                <input name="ref" value="JFR-PAY-{topup_id[:8].upper()}" required>
+                <div class="ref-hint">Auto-generated · editable for demo</div>
+              </div>
+              <div class="field">
+                <label>Provider fee (CHF)</label>
+                <input name="fee" value="0.80" type="number" step="0.01" min="0">
+              </div>
+              <button class="btn-pay" type="submit">Confirm &amp; Credit Wallet</button>
+            </form>
+            <div class="secure-badge">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              256-bit SSL · Demo environment
+            </div>
+          </div>
+        </div>
+        </body></html>"""
+
+    ref = request.form.get("ref", f"JFR-PAY-{topup_id[:8].upper()}")
     fee = float(request.form.get("fee", 0))
     services.complete_topup(topup_id=topup_id, payment_provider_ref=ref, fee_chf=fee)
-    return f"""
-    <html><body style="font-family:system-ui;padding:2rem">
-      <h2>✓ Payment confirmed</h2>
-      <p>Wallet credited. <a href="/">Back to wallet</a></p>
-    </body></html>
-    """
+    return f"""<!DOCTYPE html><html><head>{PAGE_STYLE}<title>Payment confirmed · Jungfrau Wallet</title></head><body>
+    <nav class="navbar">
+      <div class="nav-logo">Jungfrau<em>.</em>Wallet</div>
+      <span class="nav-badge">Secure Pay</span>
+    </nav>
+    <div class="card">
+      <div class="header" style="background:linear-gradient(135deg,#1f4d35 0%,#3D7252 100%);padding:2.5rem 2rem;">
+        <div style="width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;margin:0 auto .85rem;">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="header-title">Payment confirmed</div>
+        <div class="header-sub" style="margin-top:.35rem;">Your wallet has been credited</div>
+      </div>
+      <div class="body" style="text-align:center;">
+        <p style="color:#64748B;font-size:.875rem;line-height:1.7;margin-bottom:1.5rem;">
+          The top-up was processed successfully.<br>Close this window and return to your wallet.
+        </p>
+        <button onclick="if(window.opener){{window.opener.postMessage('topup_complete','*');}} window.close();" style="display:block;width:100%;padding:.9rem;background:#1B3259;color:#fff;border:none;border-radius:10px;font-weight:800;text-decoration:none;font-size:.95rem;cursor:pointer;font-family:inherit;">
+          Back to Wallet
+        </button>
+        <div class="footer-note" style="margin-top:1rem;">Ref: {ref}</div>
+      </div>
+    </div>
+    </body></html>"""
 
 
 # ---- Admin / settlement -----------------------------------------------------
