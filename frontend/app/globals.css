@@ -81,6 +81,8 @@ body {
 .pill-settled   { background: #e2f2e8; color: var(--pine); }
 .pill-failed    { background: #fdecef; color: var(--danger); }
 .pill-reversed  { background: var(--line); color: var(--sub); }
+.pill-active    { background: #e2f2e8; color: var(--pine); }
+.pill-rejected  { background: #fdecef; color: var(--danger); }
 
 .toast {
   position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
