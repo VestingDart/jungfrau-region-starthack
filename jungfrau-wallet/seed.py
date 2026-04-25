@@ -44,36 +44,46 @@ PARTNERS = [
 
 # Offers: mix of bundled entitlements (paid via booking) and priced wallet items.
 # Format per partner key (matches PARTNERS[i]["api_key"]):
-#   (title, type, guest_price_chf, partner_payout_chf, description)
+#   (title, type, guest_price_chf, partner_payout_chf, original_price_chf, image_hint, description)
 OFFERS_BY_PARTNER = {
     "key-jungfraubahnen": [
-        ("Cable car day pass (50% off)", "entitlement", 0, 35.00,
+        ("Cable car day pass (50% off)", "entitlement", 0, 35.00, 70.00,
+         "mountains-cable-car",
          "One-time 50%-off day pass on the Männlichen-Grindelwald cable car"),
-        ("First Cliff Walk admission", "entitlement", 0, 12.00,
-         "Free admission to the First Cliff Walk experience"),
+        ("First Cliff Walk admission", "entitlement", 0, 12.00, 24.00,
+         "cliff-walk-bridge",
+         "Free admission to the First Cliff Walk suspension bridge experience"),
     ],
     "key-baeckerei": [
-        ("Welcome coffee + croissant", "entitlement", 0, 6.50,
+        ("Welcome coffee + croissant", "entitlement", 0, 6.50, 6.50,
+         "coffee-croissant-morning",
          "Free morning coffee and butter croissant, once per stay"),
-        ("Lunch sandwich CHF 12", "priced", 12.00, 12.00,
+        ("Lunch sandwich CHF 12", "priced", 12.00, 12.00, 16.00,
+         "alpine-sandwich",
          "Pay from wallet: signature alpine sandwich + drink"),
     ],
     "key-outdoor": [
-        ("River rafting (priced)", "priced", 95.00, 95.00,
+        ("River rafting (3h)", "priced", 95.00, 95.00, 115.00,
+         "river-rafting-adventure",
          "3-hour Lütschine river rafting experience, paid from wallet"),
-        ("Canyoning intro", "priced", 140.00, 140.00,
+        ("Canyoning intro", "priced", 140.00, 140.00, 165.00,
+         "canyoning-waterfall",
          "Half-day canyoning trip with all gear included"),
     ],
     "key-skirental": [
-        ("Ski rental day (15% off)", "entitlement", 0, 38.00,
+        ("Ski rental day (15% off)", "entitlement", 0, 38.00, 45.00,
+         "ski-slopes-winter",
          "15% off one day of standard ski + boots rental"),
-        ("Helmet rental", "priced", 10.00, 10.00,
+        ("Helmet rental", "priced", 10.00, 10.00, 12.00,
+         "ski-helmet",
          "Single-day helmet rental from wallet"),
     ],
     "key-bergblick": [
-        ("Fondue dinner CHF 35", "priced", 35.00, 35.00,
+        ("Fondue dinner", "priced", 35.00, 35.00, 42.00,
+         "cheese-fondue-dinner",
          "Traditional fondue dinner per person, panoramic terrace seating"),
-        ("Welcome rösti", "entitlement", 0, 18.00,
+        ("Welcome rösti", "entitlement", 0, 18.00, 18.00,
+         "swiss-rosti-food",
          "Free Bergblick rösti on arrival, valid lunch only"),
     ],
 }
@@ -117,15 +127,17 @@ def seed() -> dict:
         offer_summaries = []
         for api_key, offers in OFFERS_BY_PARTNER.items():
             partner_id = partner_id_by_key[api_key]
-            for title, type_, guest_price_chf, partner_payout_chf, descr in offers:
+            for title, type_, guest_price_chf, partner_payout_chf, orig_price_chf, img_hint, descr in offers:
                 oid = new_id()
                 conn.execute(
                     """INSERT INTO offers (id, partner_id, title, description, type,
                                            guest_price_rappen, partner_payout_rappen,
+                                           original_price_rappen, image_hint,
                                            active, created_at)
-                       VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)""",
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)""",
                     (oid, partner_id, title, descr, type_,
                      chf_to_rappen(guest_price_chf), chf_to_rappen(partner_payout_chf),
+                     chf_to_rappen(orig_price_chf), img_hint,
                      utcnow_iso()),
                 )
                 offer_summaries.append({"id": oid, "title": title, "type": type_})

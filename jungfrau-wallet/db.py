@@ -91,6 +91,8 @@ CREATE TABLE IF NOT EXISTS offers (
     type                 TEXT NOT NULL CHECK (type IN ('entitlement','priced')),
     guest_price_rappen   INTEGER NOT NULL DEFAULT 0 CHECK (guest_price_rappen >= 0),
     partner_payout_rappen INTEGER NOT NULL CHECK (partner_payout_rappen >= 0),
+    original_price_rappen INTEGER,         -- display-only: NULL means no discount shown
+    image_hint            TEXT,            -- seed string for placeholder image
     eligibility_rules    TEXT NOT NULL DEFAULT '{}',  -- JSON
     redemption_rules     TEXT NOT NULL DEFAULT '{}',  -- JSON
     active               INTEGER NOT NULL DEFAULT 1,
@@ -207,6 +209,15 @@ def init_db():
     conn = get_connection()
     try:
         conn.executescript(SCHEMA)
+        # Additive migrations for databases created before new columns were added
+        for stmt in (
+            "ALTER TABLE offers ADD COLUMN original_price_rappen INTEGER",
+            "ALTER TABLE offers ADD COLUMN image_hint TEXT",
+        ):
+            try:
+                conn.execute(stmt)
+            except Exception:
+                pass  # column already exists
     finally:
         conn.close()
 

@@ -3,358 +3,876 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Jungfrau Wallet — Guest</title>
+<title>Jungfrau Guest Wallet</title>
 <style>
-  :root {
-    --red: #DC0018;       /* Swiss red */
-    --ink: #0E141B;
-    --sub: #5A6470;
-    --bg: #F4F5F7;
-    --card: #ffffff;
-    --line: #E3E6EA;
-    --green: #1F8A4C;
-    --gold: #B8860B;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; font-family: -apple-system, system-ui, "Segoe UI", sans-serif;
-    background: var(--bg); color: var(--ink); line-height: 1.5;
-  }
-  header {
-    background: var(--ink); color: white; padding: 1rem 1.5rem;
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  header h1 { margin: 0; font-size: 1.1rem; font-weight: 600; }
-  .badge { background: var(--red); color: white; padding: 0.15rem 0.5rem;
-           border-radius: 4px; font-size: 0.75rem; }
-  main { max-width: 600px; margin: 0 auto; padding: 1.5rem; }
-  .card {
-    background: var(--card); border: 1px solid var(--line);
-    border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem;
-  }
-  .balance {
-    background: linear-gradient(135deg, #0E141B 0%, #2A3540 100%);
-    color: white; padding: 1.5rem; border-radius: 12px;
-    text-align: center; margin-bottom: 1rem;
-  }
-  .balance .amount { font-size: 2.5rem; font-weight: 700; }
-  .balance .label { opacity: 0.7; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }
-  h2 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em;
-       color: var(--sub); margin: 0 0 0.75rem; font-weight: 600; }
-  .offer {
-    border: 1px solid var(--line); border-radius: 8px; padding: 0.85rem;
-    margin-bottom: 0.5rem; display: flex; justify-content: space-between;
-    align-items: center; gap: 0.5rem;
-  }
-  .offer .info { flex: 1; }
-  .offer .title { font-weight: 600; font-size: 0.95rem; }
-  .offer .partner { color: var(--sub); font-size: 0.8rem; }
-  .offer .descr { color: var(--sub); font-size: 0.8rem; margin-top: 0.25rem; }
-  .price { font-weight: 600; color: var(--ink); font-size: 0.95rem; }
-  .price.free { color: var(--green); }
-  button {
-    background: var(--red); color: white; border: 0; padding: 0.5rem 1rem;
-    border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.85rem;
-  }
-  button:hover { opacity: 0.9; }
-  button.secondary { background: var(--ink); }
-  button.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
-  input, select {
-    border: 1px solid var(--line); padding: 0.5rem 0.75rem;
-    border-radius: 6px; font-size: 0.9rem; width: 100%;
-  }
-  .row { display: flex; gap: 0.5rem; align-items: center; }
-  .qr-modal {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
-    display: none; align-items: center; justify-content: center; z-index: 100;
-    padding: 1rem;
-  }
-  .qr-modal.show { display: flex; }
-  .qr-box {
-    background: white; border-radius: 16px; padding: 1.5rem;
-    text-align: center; max-width: 420px; width: 100%;
-  }
-  .qr-img { width: 280px; height: 280px; margin: 1rem auto;
-            border: 8px solid white; border-radius: 8px; display: block; }
-  .countdown { color: var(--red); font-weight: 600; font-size: 1.1rem; }
-  .token-text {
-    font-family: ui-monospace, monospace; font-size: 0.7rem;
-    background: var(--bg); padding: 0.5rem; border-radius: 4px;
-    word-break: break-all; max-height: 80px; overflow: auto;
-    color: var(--sub); margin-top: 0.5rem;
-  }
-  .empty { color: var(--sub); font-size: 0.85rem; text-align: center; padding: 1rem; }
-  .toast {
-    position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
-    background: var(--ink); color: white; padding: 0.75rem 1.25rem;
-    border-radius: 8px; opacity: 0; transition: opacity 0.2s;
-    pointer-events: none; max-width: 90%;
-  }
-  .toast.show { opacity: 1; }
-  .tx-list { font-size: 0.85rem; }
-  .tx { display: flex; justify-content: space-between; padding: 0.4rem 0;
-        border-bottom: 1px solid var(--line); }
-  .tx:last-child { border-bottom: 0; }
-  .tx .amt.in { color: var(--green); }
-  .tx .amt.out { color: var(--red); }
-  select#guestSelect { max-width: 280px; }
+/* ─── Jungfrau Region colour palette ─── */
+:root {
+  --night:  #0E1C2E;
+  --navy:   #1B3259;
+  --blue:   #2D5396;
+  --sand:   #F2EFE8;
+  --white:  #FFFFFF;
+  --gold:   #C4950E;
+  --pine:   #3D7252;
+  --text:   #1C1C2E;
+  --sub:    #64748B;
+  --line:   #DDD9D2;
+  --danger: #C5202E;
+  --ease: cubic-bezier(.4,0,.2,1);
+  --shadow-sm: 0 2px 12px rgba(14,28,46,.08);
+  --shadow-md: 0 8px 32px rgba(14,28,46,.14);
+  --shadow-lg: 0 20px 56px rgba(14,28,46,.22);
+  --r: 14px;
+}
+
+*,*::before,*::after { box-sizing: border-box; margin:0; padding:0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, system-ui, "Segoe UI", sans-serif;
+  background: var(--sand);
+  color: var(--text);
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+/* ─── Navbar ─── */
+.navbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 50;
+  height: 64px;
+  background: rgba(14,28,46,.92);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  display: flex;
+  align-items: center;
+  padding: 0 2rem;
+  gap: 1.25rem;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
+.nav-logo {
+  font-size: .95rem; font-weight: 900; letter-spacing: .12em;
+  text-transform: uppercase; color: #fff; flex-shrink: 0;
+}
+.nav-logo em { color: var(--gold); font-style: normal; }
+
+.nav-sep { width: 1px; height: 20px; background: rgba(255,255,255,.12); }
+
+.nav-select {
+  flex: 1; max-width: 260px;
+  padding: .38rem .75rem;
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.13);
+  border-radius: 8px;
+  color: #fff; font-size: .82rem; cursor: pointer;
+  transition: border-color .2s;
+}
+.nav-select:focus { outline: none; border-color: var(--gold); }
+.nav-select option { background: var(--night); color: #fff; }
+
+.nav-right { margin-left: auto; display: flex; align-items: center; gap: 1.25rem; }
+
+.wallet-trigger {
+  display: flex; align-items: center; gap: .5rem;
+  background: var(--gold); color: #fff; border: none;
+  padding: .42rem 1rem .42rem .75rem;
+  border-radius: 22px; font-weight: 700; font-size: .82rem;
+  cursor: pointer; letter-spacing: .01em;
+  transition: box-shadow .2s, transform .15s;
+}
+.wallet-trigger:hover { box-shadow: 0 4px 18px rgba(196,149,14,.45); transform: translateY(-1px); }
+.wallet-trigger svg { width: 17px; height: 17px; flex-shrink: 0; }
+
+.nav-link {
+  color: rgba(255,255,255,.6); text-decoration: none;
+  font-size: .82rem; font-weight: 500; letter-spacing: .02em;
+  transition: color .2s;
+}
+.nav-link:hover { color: #fff; }
+
+/* ─── Hero ─── */
+.hero {
+  position: relative;
+  height: 85vh; min-height: 500px;
+  background-image: url('https://picsum.photos/seed/swiss-alps-three-peaks/1920/1080');
+  background-size: cover;
+  background-position: top center;
+  background-attachment: fixed;
+}
+/* Clear at top, fades to page background at the bottom */
+.hero::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent        0%,
+    transparent        38%,
+    rgba(242,239,232,.55) 65%,
+    rgba(242,239,232,.88) 82%,
+    #F2EFE8            100%
+  );
+}
+.hero-content {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  z-index: 1;
+  max-width: 1200px; margin: 0 auto;
+  padding: 2.5rem 2.5rem 3.5rem;
+  color: #fff;
+}
+.hero-tag {
+  display: inline-block;
+  background: var(--gold); color: #fff;
+  padding: .18rem .65rem; border-radius: 4px;
+  font-size: .62rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .14em;
+  margin-bottom: .85rem;
+}
+.hero-content h1 {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 900; letter-spacing: -.03em;
+  line-height: 1.06; margin-bottom: .6rem;
+  text-shadow: 0 2px 20px rgba(0,0,0,.35);
+}
+.hero-content p {
+  font-size: 1rem; opacity: .82; max-width: 460px; line-height: 1.65;
+  text-shadow: 0 1px 8px rgba(0,0,0,.3);
+}
+
+/* ─── Main ─── */
+main {
+  max-width: 1200px; margin: 0 auto;
+  padding: 2.5rem 2rem 4rem;
+}
+.section { margin-bottom: 3.5rem; }
+.section-head { margin-bottom: 1.75rem; }
+.section-head h2 {
+  font-size: 1.35rem; font-weight: 800; color: var(--text);
+  letter-spacing: -.01em;
+}
+.section-head p { font-size: .875rem; color: var(--sub); margin-top: .3rem; }
+
+/* ─── Offer grid ─── */
+.offer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(285px, 1fr));
+  gap: 1.5rem;
+}
+
+.offer-card {
+  background: var(--white);
+  border-radius: var(--r);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: transform .28s var(--ease), box-shadow .28s var(--ease);
+  animation: rise .5s var(--ease) both;
+  display: flex; flex-direction: column;
+}
+.offer-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); }
+@keyframes rise {
+  from { opacity:0; transform: translateY(22px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+.offer-card:nth-child(1){animation-delay:.04s}
+.offer-card:nth-child(2){animation-delay:.09s}
+.offer-card:nth-child(3){animation-delay:.14s}
+.offer-card:nth-child(4){animation-delay:.19s}
+.offer-card:nth-child(5){animation-delay:.24s}
+.offer-card:nth-child(6){animation-delay:.29s}
+
+.offer-img {
+  position: relative; height: 200px; overflow: hidden;
+  background: var(--sand);
+}
+.offer-img img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+  transition: transform .45s var(--ease);
+}
+.offer-card:hover .offer-img img { transform: scale(1.06); }
+
+.badge-tl, .badge-tr {
+  position: absolute; top: .75rem;
+  padding: .2rem .55rem; border-radius: 5px;
+  font-size: .62rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .07em;
+}
+.badge-tl { left: .75rem; background: rgba(14,28,46,.7); backdrop-filter: blur(6px); color: #fff; }
+.badge-tr { right: .75rem; }
+.badge-pine { background: var(--pine); color: #fff; }
+.badge-gold { background: var(--gold); color: #fff; }
+.badge-navy { background: var(--navy); color: #fff; }
+
+.offer-body {
+  padding: 1.2rem 1.25rem 1.5rem;
+  display: flex; flex-direction: column; flex: 1;
+}
+.offer-partner {
+  font-size: .67rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .07em;
+  color: var(--sub); margin-bottom: .35rem;
+}
+.offer-title {
+  font-size: 1rem; font-weight: 700;
+  color: var(--text); line-height: 1.3; margin-bottom: .42rem;
+}
+.offer-desc {
+  font-size: .82rem; color: var(--sub);
+  line-height: 1.55; margin-bottom: 1rem; flex: 1;
+}
+.offer-pricing {
+  display: flex; align-items: baseline; gap: .5rem; margin-bottom: 1rem;
+}
+.price-old { font-size: .8rem; color: var(--sub); text-decoration: line-through; }
+.price-new { font-size: 1.22rem; font-weight: 800; color: var(--text); letter-spacing: -.01em; }
+.price-new.free { color: var(--pine); }
+
+.offer-btn {
+  width: 100%; border: none; border-radius: 9px;
+  padding: .68rem 1rem; font-weight: 700; font-size: .875rem;
+  cursor: pointer; letter-spacing: .01em;
+  transition: background .2s, transform .15s;
+  font-family: inherit;
+  background: var(--navy); color: #fff;
+}
+.offer-btn:hover { background: var(--blue); transform: translateY(-1px); }
+.offer-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; background: var(--sub); }
+
+/* ─── Activity card ─── */
+.act-card {
+  background: var(--white); border-radius: var(--r);
+  box-shadow: var(--shadow-sm); overflow: hidden;
+}
+.act-card-head {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.act-card-head h2 {
+  font-size: .75rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .08em; color: var(--sub);
+}
+.act-body { padding: .25rem 1.5rem; }
+.act-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: .72rem 0; border-bottom: 1px solid var(--line);
+  font-size: .84rem;
+}
+.act-row:last-child { border-bottom: none; }
+.act-type { font-weight: 600; text-transform: capitalize; }
+.act-date { font-size: .73rem; color: var(--sub); }
+.act-amt { font-weight: 700; }
+.amt-in { color: var(--pine); }
+.amt-out { color: var(--danger); }
+.act-empty { text-align: center; padding: 2.5rem 1rem; color: var(--sub); font-size: .875rem; }
+
+/* ─── Wallet overlay + panel ─── */
+.wallet-overlay {
+  position: fixed; inset: 0;
+  background: rgba(14,28,46,.45);
+  opacity: 0; pointer-events: none;
+  transition: opacity .32s;
+  z-index: 60;
+}
+.wallet-overlay.open { opacity: 1; pointer-events: all; }
+
+.wallet-panel {
+  position: fixed; top: 0; right: -420px;
+  width: 390px; height: 100vh;
+  background: var(--white);
+  box-shadow: -4px 0 56px rgba(14,28,46,.22);
+  z-index: 61;
+  transition: right .38s cubic-bezier(.4,0,.2,1);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.wallet-panel.open { right: 0; }
+
+/* sticky panel header */
+.wp-top {
+  background: var(--night);
+  padding: 1.25rem 1.5rem 1.35rem;
+  flex-shrink: 0;
+}
+.wp-top-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: .15rem;
+}
+.wp-label { font-size: .68rem; text-transform: uppercase; letter-spacing: .1em; color: rgba(255,255,255,.45); font-weight: 700; }
+.wp-close {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: rgba(255,255,255,.1); border: none;
+  color: #fff; font-size: 1rem; cursor: pointer; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .2s;
+}
+.wp-close:hover { background: rgba(255,255,255,.2); }
+
+/* scrollable body */
+.wp-body { flex: 1; overflow-y: auto; }
+
+/* ── Section 1: Balance ── */
+.wps-balance {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--line);
+}
+.wps-label {
+  font-size: .67rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .09em; color: var(--sub); margin-bottom: .85rem;
+}
+.balance-display {
+  font-size: 2.8rem; font-weight: 900; letter-spacing: -.04em;
+  color: var(--night); line-height: 1; margin-bottom: 1.25rem;
+}
+.quick-grid {
+  display: grid; grid-template-columns: repeat(4,1fr); gap: .4rem; margin-bottom: .75rem;
+}
+.q-btn {
+  background: var(--sand); border: 1px solid var(--line);
+  border-radius: 8px; padding: .48rem 0; font-size: .78rem; font-weight: 700;
+  cursor: pointer; color: var(--text); transition: all .15s; font-family: inherit;
+}
+.q-btn:hover, .q-btn.sel { background: var(--navy); color: #fff; border-color: var(--navy); }
+.topup-row { display: flex; gap: .5rem; }
+.topup-row input {
+  flex: 1; padding: .62rem .75rem;
+  border: 1px solid var(--line); border-radius: 8px;
+  font-size: .875rem; color: var(--text);
+  transition: border-color .2s; font-family: inherit;
+}
+.topup-row input:focus { outline: none; border-color: var(--navy); }
+.topup-row button {
+  background: var(--navy); color: #fff; border: none;
+  padding: .62rem 1rem; border-radius: 8px;
+  font-weight: 700; font-size: .82rem; cursor: pointer;
+  white-space: nowrap; font-family: inherit; transition: opacity .2s;
+}
+.topup-row button:hover { opacity: .85; }
+
+/* ── Section 2: Card ── */
+.wps-card {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--line);
+}
+
+/* 3D flip card */
+.flip-wrap {
+  perspective: 1100px;
+  height: 190px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.flip-inner {
+  position: relative; width: 100%; height: 100%;
+  transition: transform .68s cubic-bezier(.4,0,.2,1);
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+}
+.flip-wrap.flipped .flip-inner { transform: rotateY(180deg); }
+
+.card-face {
+  position: absolute; inset: 0;
+  border-radius: 16px; overflow: hidden;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  box-shadow: 0 10px 36px rgba(14,28,46,.3);
+}
+
+/* Front */
+.card-front { background: var(--navy); }
+.card-front-img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%; object-fit: cover;
+  opacity: .55;
+}
+.card-front-content {
+  position: relative; z-index: 1; height: 100%;
+  padding: 1.1rem 1.3rem;
+  display: flex; flex-direction: column;
+  justify-content: space-between;
+  background: linear-gradient(140deg, rgba(14,28,46,.72) 0%, rgba(14,28,46,.18) 100%);
+  color: #fff;
+}
+.cf-brand { font-size: .62rem; font-weight: 900; letter-spacing: .22em; text-transform: uppercase; opacity: .85; }
+.cf-name  { font-size: 1.15rem; font-weight: 800; letter-spacing: .04em; }
+.cf-number { font-family: ui-monospace, monospace; font-size: .7rem; opacity: .65; letter-spacing: .1em; }
+
+/* Back */
+.card-back {
+  transform: rotateY(180deg);
+  background: linear-gradient(150deg, #0a1625 0%, #1B3259 100%);
+}
+.cb-stripe { height: 38px; background: rgba(0,0,0,.45); margin-top: 30px; }
+.cb-body {
+  padding: .8rem 1.3rem;
+  display: flex; flex-direction: column; gap: .35rem; color: #fff;
+}
+.cb-name     { font-size: .92rem; font-weight: 700; letter-spacing: .02em; }
+.cb-validity { font-size: .68rem; opacity: .5; text-transform: uppercase; letter-spacing: .06em; }
+.cb-qr-wrap {
+  background: #fff; display: inline-block;
+  padding: 4px; border-radius: 6px; margin-top: .3rem;
+  line-height: 0; width: fit-content;
+}
+.cb-qr { width: 66px; height: 66px; display: block; }
+
+.flip-hint {
+  text-align: center; font-size: .7rem; color: var(--sub);
+  margin-top: .55rem; letter-spacing: .05em;
+}
+
+/* ── Section 3: Activity ── */
+.wps-activity { padding: 1.5rem; }
+.wp-act-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: .6rem 0; border-bottom: 1px solid var(--line);
+  font-size: .82rem;
+}
+.wp-act-row:last-child { border-bottom: none; }
+.wp-act-type { font-weight: 600; text-transform: capitalize; }
+.wp-act-date { font-size: .72rem; color: var(--sub); }
+
+/* ─── QR Modal ─── */
+.qr-modal {
+  position: fixed; inset: 0;
+  background: rgba(14,28,46,.7);
+  display: none; align-items: center; justify-content: center;
+  z-index: 100; padding: 1rem;
+  backdrop-filter: blur(5px);
+}
+.qr-modal.show { display: flex; }
+.qr-box {
+  background: var(--white); border-radius: 20px;
+  padding: 2rem; text-align: center;
+  max-width: 400px; width: 100%;
+  box-shadow: var(--shadow-lg);
+  animation: rise .25s var(--ease);
+}
+.qr-title  { font-size: 1.1rem; font-weight: 800; margin-bottom: .3rem; color: var(--text); }
+.qr-sub    { font-size: .85rem; color: var(--sub); }
+.qr-timer  { color: var(--danger); font-weight: 800; }
+.qr-img    { width: 210px; height: 210px; margin: 1.25rem auto; border: 10px solid var(--sand); border-radius: 10px; display: block; }
+.qr-token  {
+  font-family: ui-monospace, monospace; font-size: .62rem;
+  background: var(--sand); padding: .5rem; border-radius: 6px;
+  word-break: break-all; max-height: 54px; overflow: auto;
+  color: var(--sub); margin-top: .75rem; text-align: left;
+}
+.qr-actions { display: flex; gap: .5rem; margin-top: 1rem; justify-content: center; }
+
+/* ─── Buttons (generic) ─── */
+.btn { border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-family: inherit; }
+.btn-ghost { background: var(--sand); color: var(--text); border: 1px solid var(--line); padding: .58rem 1.1rem; font-size: .875rem; }
+.btn-ghost:hover { border-color: var(--navy); }
+.btn-primary { background: var(--navy); color: #fff; padding: .58rem 1.1rem; font-size: .875rem; }
+.btn-primary:hover { background: var(--blue); }
+.btn-sm { padding: .32rem .7rem; font-size: .78rem; }
+
+/* ─── Toast ─── */
+.toast {
+  position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+  background: var(--night); color: #fff;
+  padding: .75rem 1.25rem; border-radius: 10px;
+  opacity: 0; transition: opacity .2s;
+  pointer-events: none; z-index: 200;
+  font-size: .875rem; font-weight: 500;
+  box-shadow: 0 8px 24px rgba(0,0,0,.3);
+}
+.toast.show { opacity: 1; }
+
+/* ─── Responsive ─── */
+@media (max-width: 768px) {
+  .navbar { padding: 0 1rem; gap: .75rem; }
+  .nav-select { max-width: 130px; }
+  main { padding: 1.5rem 1rem 2.5rem; }
+  .offer-grid { grid-template-columns: 1fr; }
+  .wallet-panel { width: 100%; right: -100vw; }
+}
 </style>
 </head>
 <body>
 
-<header>
-  <h1>🏔️ Jungfrau Wallet <span class="badge">Demo</span></h1>
-  <div>
-    <a href="/partner" style="color: white; text-decoration: none; font-size: 0.85rem;">Partner →</a>
+<!-- ── Navbar ── -->
+<nav class="navbar">
+  <div class="nav-logo">Jungfrau<em>.</em>Wallet</div>
+  <div class="nav-sep"></div>
+  <select class="nav-select" id="guestSelect" onchange="loadWallet()"></select>
+  <div class="nav-right">
+    <button class="wallet-trigger" onclick="toggleWallet()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="7" width="20" height="14" rx="2.5"/>
+        <path d="M16 7V5a2 2 0 0 0-4 0v2"/>
+        <circle cx="16" cy="14" r="1.5" fill="currentColor" stroke="none"/>
+      </svg>
+      My Wallet
+    </button>
+    <a class="nav-link" href="/partner">Partner</a>
+    <a class="nav-link" href="/admin">Admin</a>
   </div>
-</header>
+</nav>
 
+<!-- ── Hero ── -->
+<section class="hero">
+  <div class="hero-content">
+    <div class="hero-tag">Demo</div>
+    <h1>Welcome to the<br>Jungfrau Region</h1>
+    <p>Your digital guest wallet — exclusive alpine perks, seamless payments, one card.</p>
+  </div>
+</section>
+
+<!-- ── Main ── -->
 <main>
-  <div class="card">
-    <div class="row">
-      <select id="guestSelect" onchange="loadWallet()"></select>
-      <button class="ghost" onclick="loadWallet()">↻</button>
+  <!-- Entitlements -->
+  <section class="section">
+    <div class="section-head">
+      <h2>Included in Your Stay</h2>
+      <p>These perks are bundled with your booking — activate each one with a single tap.</p>
     </div>
-  </div>
-
-  <div class="balance">
-    <div class="label">Wallet balance</div>
-    <div class="amount" id="balance">CHF 0.00</div>
-    <div class="row" style="justify-content: center; margin-top: 1rem; gap: 0.5rem;">
-      <input id="topupAmount" type="number" value="200" min="10" step="10"
-             style="width: 100px; color: var(--ink);" />
-      <button onclick="topup()">Top up via TWINT</button>
+    <div class="offer-grid" id="entitlements">
+      <div style="color:var(--sub);font-size:.875rem;padding:1rem">Loading...</div>
     </div>
-  </div>
+  </section>
 
-  <div class="card">
-    <h2>Your entitlements (free)</h2>
-    <div id="entitlements"></div>
-  </div>
+  <!-- Priced offers -->
+  <section class="section">
+    <div class="section-head">
+      <h2>Exclusive Experiences</h2>
+      <p>Pay directly from your wallet — no card needed at the venue.</p>
+    </div>
+    <div class="offer-grid" id="pricedOffers">
+      <div style="color:var(--sub);font-size:.875rem;padding:1rem">Loading...</div>
+    </div>
+  </section>
 
-  <div class="card">
-    <h2>Available to buy from wallet</h2>
-    <div id="pricedOffers"></div>
-  </div>
-
-  <div class="card">
-    <h2>Recent activity</h2>
-    <div class="tx-list" id="txList"></div>
-  </div>
+  <!-- Activity -->
+  <section class="section">
+    <div class="act-card">
+      <div class="act-card-head">
+        <h2>Transaction History</h2>
+        <button class="btn btn-ghost btn-sm" onclick="loadWallet()">Refresh</button>
+      </div>
+      <div class="act-body" id="activityList">
+        <div class="act-empty">No transactions yet</div>
+      </div>
+    </div>
+  </section>
 </main>
 
+<!-- ── Wallet overlay ── -->
+<div class="wallet-overlay" id="walletOverlay" onclick="toggleWallet()"></div>
+
+<!-- ── Wallet panel ── -->
+<div class="wallet-panel" id="walletPanel">
+
+  <!-- sticky top bar -->
+  <div class="wp-top">
+    <div class="wp-top-row">
+      <span class="wp-label">My Wallet</span>
+      <button class="wp-close" onclick="toggleWallet()" title="Close">&#x2715;</button>
+    </div>
+  </div>
+
+  <div class="wp-body">
+
+    <!-- Section 1: Balance & top-up -->
+    <div class="wps-balance">
+      <div class="wps-label">Available Balance</div>
+      <div class="balance-display" id="balance">CHF 0.00</div>
+
+      <div class="wps-label" style="margin-bottom:.6rem">Top up via TWINT</div>
+      <div class="quick-grid">
+        <button class="q-btn" onclick="setAmt(50)">+50</button>
+        <button class="q-btn" onclick="setAmt(100)">+100</button>
+        <button class="q-btn sel" onclick="setAmt(200)">+200</button>
+        <button class="q-btn" onclick="setAmt(500)">+500</button>
+      </div>
+      <div class="topup-row">
+        <input id="topupAmount" type="number" value="200" min="10" step="10" placeholder="CHF amount" />
+        <button onclick="topup()">Top up</button>
+      </div>
+    </div>
+
+    <!-- Section 2: Physical card -->
+    <div class="wps-card">
+      <div class="wps-label" style="margin-bottom:.9rem">My Card</div>
+
+      <div class="flip-wrap" id="physicalCard" onclick="flipCard()">
+        <div class="flip-inner">
+
+          <!-- Front -->
+          <div class="card-face card-front">
+            <img class="card-front-img"
+                 src="https://picsum.photos/seed/alpine-peaks-summit/600/380"
+                 alt="Jungfrau peaks" />
+            <div class="card-front-content">
+              <div>
+                <div class="cf-brand">Jungfrau Region</div>
+              </div>
+              <div>
+                <div class="cf-name">Guest Pass</div>
+                <div class="cf-number" id="cardNumber">JFR-2026-A0001</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Back -->
+          <div class="card-face card-back">
+            <div class="cb-stripe"></div>
+            <div class="cb-body">
+              <div class="cb-name"     id="cbName">—</div>
+              <div class="cb-validity" id="cbValidity">Valid: —</div>
+              <div class="cb-qr-wrap">
+                <img class="cb-qr" id="cbQr" src="" alt="Card QR" />
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <div class="flip-hint">Tap card to flip</div>
+    </div>
+
+    <!-- Section 3: Recent activity -->
+    <div class="wps-activity">
+      <div class="wps-label" style="margin-bottom:.75rem">Recent Activity</div>
+      <div id="wpActivity">
+        <div class="act-empty" style="padding:1.5rem 0">No activity yet</div>
+      </div>
+    </div>
+
+  </div><!-- /wp-body -->
+</div><!-- /wallet-panel -->
+
+<!-- ── QR Modal ── -->
 <div class="qr-modal" id="qrModal" onclick="closeModal(event)">
   <div class="qr-box" onclick="event.stopPropagation()">
-    <h3 id="qrTitle" style="margin: 0 0 0.5rem;">Show this to the partner</h3>
-    <p style="color: var(--sub); font-size: 0.85rem; margin: 0;">
-      Expires in <span class="countdown" id="countdown">60</span>s
-    </p>
+    <div class="qr-title" id="qrTitle">Show this to the partner</div>
+    <div class="qr-sub">Expires in <span class="qr-timer" id="countdown">60</span>s</div>
     <img class="qr-img" id="qrImg" alt="QR code" />
-    <p style="font-size: 0.75rem; color: var(--sub); margin: 0.5rem 0 0;">
-      Or copy the token (for demo without a camera):
-    </p>
-    <div class="token-text" id="qrTokenText"></div>
-    <button class="ghost" style="margin-top: 0.75rem;" onclick="copyToken()">Copy token</button>
-    <button onclick="closeModal()" style="margin-top: 0.5rem;">Close</button>
+    <p style="font-size:.72rem;color:var(--sub)">Or copy the token (demo without a camera):</p>
+    <div class="qr-token" id="qrTokenText"></div>
+    <div class="qr-actions">
+      <button class="btn btn-ghost" onclick="copyToken()">Copy token</button>
+      <button class="btn btn-primary" onclick="closeModal()">Close</button>
+    </div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-let currentGuestId = null;
-let currentToken = null;
-let countdownTimer = null;
+let guestId = null, currentToken = null, ticker = null, walletOpen = false, cardFlipped = false;
 
-function toast(msg) {
-  const t = document.getElementById("toast");
-  t.textContent = msg;
-  t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 2400);
-}
+/* ── Utilities ── */
+const $ = id => document.getElementById(id);
+function esc(s){ return(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2400); }
 
-async function api(path, options = {}) {
-  options.headers = options.headers || {};
-  options.headers["Content-Type"] = "application/json";
-  if (options.body && typeof options.body === "object") {
-    options.body = JSON.stringify(options.body);
-  }
-  const r = await fetch(path, options);
-  if (!r.ok) {
-    const txt = await r.text();
-    throw new Error(`${r.status}: ${txt}`);
-  }
+async function api(path, opts={}){
+  opts.headers = opts.headers||{};
+  opts.headers['Content-Type'] = 'application/json';
+  if(opts.body && typeof opts.body==='object') opts.body=JSON.stringify(opts.body);
+  const r = await fetch(path, opts);
+  if(!r.ok){ const t=await r.text(); throw new Error(`${r.status}: ${t}`); }
   return r.json();
 }
 
-async function loadGuests() {
-  // No guest-list endpoint by design (privacy) - we read from seed via /api/health stub
-  // For the demo, hard-code the two seeded guests' card IDs and look up.
-  const candidates = ["JFR-2026-A0001", "JFR-2026-A0002"];
-  const sel = document.getElementById("guestSelect");
-  sel.innerHTML = "";
-  for (const cardId of candidates) {
-    try {
-      const r = await fetch("/api/checkin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          guest_card_id: cardId,
-          check_in: "2026-04-25",
-          check_out: "2026-04-29",
-        }),
-      });
-      if (r.ok) {
-        const data = await r.json();
-        const opt = document.createElement("option");
-        opt.value = data.guest.id;
-        opt.textContent = `${data.guest.guest_card_id} (${data.guest.email || "guest"})`;
-        sel.appendChild(opt);
-      }
-    } catch (e) { /* skip */ }
-  }
-  if (sel.options.length > 0) {
-    currentGuestId = sel.options[0].value;
-    sel.value = currentGuestId;
-    loadWallet();
-  }
+/* ── Wallet panel ── */
+function toggleWallet(){
+  walletOpen = !walletOpen;
+  $('walletPanel').classList.toggle('open', walletOpen);
+  $('walletOverlay').classList.toggle('open', walletOpen);
 }
 
-async function loadWallet() {
-  currentGuestId = document.getElementById("guestSelect").value;
-  if (!currentGuestId) return;
-  const w = await api(`/api/wallet/${currentGuestId}`);
+/* ── Card flip ── */
+function flipCard(){
+  cardFlipped = !cardFlipped;
+  $('physicalCard').classList.toggle('flipped', cardFlipped);
+}
 
-  document.getElementById("balance").textContent = `CHF ${w.balance_chf.toFixed(2)}`;
+/* ── Quick top-up amounts ── */
+function setAmt(v){
+  $('topupAmount').value = v;
+  document.querySelectorAll('.q-btn').forEach(b=>{
+    b.classList.toggle('sel', parseInt(b.textContent.replace('+',''))===v);
+  });
+}
+
+/* ── Offer image via picsum ── */
+function offerImg(title, hint){
+  const seed = hint || title.toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,40);
+  return `https://picsum.photos/seed/${seed}/600/400`;
+}
+
+/* ── Load guests ── */
+async function loadGuests(){
+  const sel = $('guestSelect');
+  sel.innerHTML = '';
+  for(const cardId of ['JFR-2026-A0001','JFR-2026-A0002']){
+    try {
+      const r = await fetch('/api/checkin',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({guest_card_id:cardId, check_in:'2026-04-25', check_out:'2026-04-29'})
+      });
+      if(r.ok){
+        const d = await r.json();
+        const o = document.createElement('option');
+        o.value = d.guest.id;
+        o.textContent = `${d.guest.guest_card_id} — ${d.guest.email||'guest'}`;
+        sel.appendChild(o);
+      }
+    } catch(_){}
+  }
+  if(sel.options.length){ guestId=sel.options[0].value; sel.value=guestId; loadWallet(); }
+}
+
+/* ── Load wallet ── */
+async function loadWallet(){
+  guestId = $('guestSelect').value;
+  if(!guestId) return;
+  let w;
+  try { w = await api(`/api/wallet/${guestId}`); }
+  catch(e){ toast('Failed to load wallet: '+e.message); return; }
+
+  const bal = `CHF ${w.balance_chf.toFixed(2)}`;
+  $('balance').textContent = bal;
+
+  // Update card display
+  const g = w.guest;
+  $('cardNumber').textContent = g.guest_card_id;
+  $('cbName').textContent = g.email ? g.email.split('@')[0].replace(/\./g,' ') : 'Guest';
+  const fmt = d => new Date(d).toLocaleDateString('en-CH',{month:'short',day:'numeric'});
+  $('cbValidity').textContent = `Valid: ${fmt(g.check_in)} – ${fmt(g.check_out)}, 2026`;
+  $('cbQr').src = `https://api.qrserver.com/v1/create-qr-code/?size=66x66&data=${encodeURIComponent(g.guest_card_id)}`;
 
   // Entitlements
-  const eDiv = document.getElementById("entitlements");
-  if (w.entitlements.length === 0) {
-    eDiv.innerHTML = '<div class="empty">All entitlements have been used</div>';
+  const eDiv = $('entitlements');
+  if(!w.entitlements||!w.entitlements.length){
+    eDiv.innerHTML='<p style="color:var(--sub);font-size:.875rem;padding:1rem 0">All entitlements used.</p>';
   } else {
-    eDiv.innerHTML = w.entitlements.map(e => `
-      <div class="offer">
-        <div class="info">
-          <div class="title">${escapeHtml(e.title)}</div>
-          <div class="partner">${escapeHtml(e.partner_name)}</div>
+    eDiv.innerHTML = w.entitlements.map((e,i)=>{
+      const val = ((e.original_price_rappen||e.partner_payout_rappen||0)/100).toFixed(2);
+      return `
+      <div class="offer-card" style="animation-delay:${i*.07}s">
+        <div class="offer-img">
+          <img src="${offerImg(e.title,e.image_hint)}" alt="${esc(e.title)}" loading="lazy"/>
+          <span class="badge-tl">Included</span>
+          <span class="badge-tr badge-pine">FREE</span>
         </div>
-        <span class="price free">FREE</span>
-        <button onclick="generateQR('${e.id}', null)">Use</button>
-      </div>
-    `).join("");
+        <div class="offer-body">
+          <div class="offer-partner">${esc(e.partner_name)}</div>
+          <div class="offer-title">${esc(e.title)}</div>
+          <div class="offer-desc">${esc(e.description||'')}</div>
+          <div class="offer-pricing">
+            <span class="price-old">CHF ${val} value</span>
+            <span class="price-new free">FREE</span>
+          </div>
+          <button class="offer-btn" onclick="generateQR('${e.id}',null)">Use Now</button>
+        </div>
+      </div>`;
+    }).join('');
   }
 
   // Priced offers
-  const pDiv = document.getElementById("pricedOffers");
-  if (w.available_priced_offers.length === 0) {
-    pDiv.innerHTML = '<div class="empty">No priced offers</div>';
+  const pDiv = $('pricedOffers');
+  if(!w.available_priced_offers||!w.available_priced_offers.length){
+    pDiv.innerHTML='<p style="color:var(--sub);font-size:.875rem;padding:1rem 0">No experiences available.</p>';
   } else {
-    pDiv.innerHTML = w.available_priced_offers.map(o => {
-      const chf = (o.partner_payout_rappen / 100).toFixed(2);
-      const affordable = w.balance_chf >= (o.partner_payout_rappen / 100);
+    pDiv.innerHTML = w.available_priced_offers.map((o,i)=>{
+      const chf = (o.partner_payout_rappen/100).toFixed(2);
+      const ok  = w.balance_chf >= o.partner_payout_rappen/100;
+      const orig= o.original_price_rappen;
+      const disc= orig&&orig>o.partner_payout_rappen ? Math.round((1-o.partner_payout_rappen/orig)*100) : 0;
       return `
-        <div class="offer">
-          <div class="info">
-            <div class="title">${escapeHtml(o.title)}</div>
-            <div class="partner">${escapeHtml(o.partner_name)}</div>
-            <div class="descr">${escapeHtml(o.description || "")}</div>
+      <div class="offer-card" style="animation-delay:${i*.07}s">
+        <div class="offer-img">
+          <img src="${offerImg(o.title,o.image_hint)}" alt="${esc(o.title)}" loading="lazy"/>
+          <span class="badge-tl">Wallet</span>
+          ${disc?`<span class="badge-tr badge-gold">${disc}% OFF</span>`:''}
+        </div>
+        <div class="offer-body">
+          <div class="offer-partner">${esc(o.partner_name)}</div>
+          <div class="offer-title">${esc(o.title)}</div>
+          <div class="offer-desc">${esc(o.description||'')}</div>
+          <div class="offer-pricing">
+            ${orig&&disc?`<span class="price-old">CHF ${(orig/100).toFixed(2)}</span>`:''}
+            <span class="price-new">CHF ${chf}</span>
           </div>
-          <span class="price">CHF ${chf}</span>
-          <button onclick="generateQR(null, '${o.id}')" ${affordable ? "" : "disabled style='opacity:0.4'"}>
-            ${affordable ? "Buy" : "Top up"}
+          <button class="offer-btn" ${ok?`onclick="generateQR(null,'${o.id}')"`:' disabled'}>
+            ${ok?'Book with Wallet':'Insufficient Balance'}
           </button>
         </div>
-      `;
-    }).join("");
-  }
-
-  // Recent transactions
-  const txDiv = document.getElementById("txList");
-  if (w.recent_transactions.length === 0) {
-    txDiv.innerHTML = '<div class="empty">No activity yet</div>';
-  } else {
-    txDiv.innerHTML = w.recent_transactions.slice(0, 10).map(t => {
-      const amt = t.amount_rappen / 100;
-      const sign = amt >= 0 ? "+" : "";
-      const cls = amt >= 0 ? "in" : "out";
-      const date = new Date(t.created_at).toLocaleString("en-CH", { dateStyle: "short", timeStyle: "short" });
-      return `<div class="tx">
-        <div><strong>${t.type}</strong> · <span style="color:var(--sub)">${date}</span></div>
-        <div class="amt ${cls}">${sign}CHF ${amt.toFixed(2)}</div>
       </div>`;
-    }).join("");
+    }).join('');
+  }
+
+  // Activity (main page)
+  const acts = w.recent_transactions||[];
+  if(!acts.length){
+    $('activityList').innerHTML = '<div class="act-empty">No transactions yet</div>';
+    $('wpActivity').innerHTML   = '<div class="act-empty" style="padding:1.5rem 0">No activity yet</div>';
+  } else {
+    const row = t => {
+      const a = t.amount_rappen/100;
+      const s = a>=0?'+':'';
+      const c = a>=0?'amt-in':'amt-out';
+      const d = new Date(t.created_at).toLocaleString('en-CH',{dateStyle:'short',timeStyle:'short'});
+      return {a,s,c,d,type:t.type};
+    };
+    $('activityList').innerHTML = acts.slice(0,10).map(t=>{
+      const {a,s,c,d}=row(t);
+      return `<div class="act-row"><div><div class="act-type">${t.type}</div><div class="act-date">${d}</div></div><div class="act-amt ${c}">${s}CHF ${Math.abs(a).toFixed(2)}</div></div>`;
+    }).join('');
+    $('wpActivity').innerHTML = acts.slice(0,8).map(t=>{
+      const {a,s,c,d}=row(t);
+      return `<div class="wp-act-row"><div><div class="wp-act-type">${t.type}</div><div class="wp-act-date">${d}</div></div><div class="act-amt ${c}">${s}CHF ${Math.abs(a).toFixed(2)}</div></div>`;
+    }).join('');
   }
 }
 
-async function topup() {
-  const amount = parseFloat(document.getElementById("topupAmount").value);
-  if (!amount || amount <= 0) return toast("Invalid amount");
+/* ── Top-up ── */
+async function topup(){
+  const amount = parseFloat($('topupAmount').value);
+  if(!amount||amount<=0) return toast('Invalid amount');
   try {
-    const r = await api(`/api/wallet/${currentGuestId}/topup`, {
-      method: "POST",
-      headers: { "Idempotency-Key": "topup-" + Date.now() },
-      body: { amount_chf: amount, payment_method: "twint" },
+    const r = await api(`/api/wallet/${guestId}/topup`,{
+      method:'POST',
+      headers:{'Idempotency-Key':'topup-'+Date.now()},
+      body:{amount_chf:amount,payment_method:'twint'}
     });
-    // Open mock-pay in a new tab
-    window.open(r.checkout_url, "_blank", "width=480,height=400");
-    toast("Complete payment in the popup, then refresh");
-  } catch (e) {
-    toast("Top-up failed: " + e.message);
-  }
+    window.open(r.checkout_url,'_blank','width=480,height=400');
+    toast('Complete payment in the popup, then refresh');
+  } catch(e){ toast('Top-up failed: '+e.message); }
 }
 
-async function generateQR(entitlement_id, offer_id) {
+/* ── QR generation ── */
+async function generateQR(eid, oid){
   try {
-    const body = entitlement_id
-      ? { guest_id: currentGuestId, entitlement_id }
-      : { guest_id: currentGuestId, offer_id };
-    const r = await api("/api/qr/generate", { method: "POST", body });
+    const body = eid ? {guest_id:guestId,entitlement_id:eid} : {guest_id:guestId,offer_id:oid};
+    const r = await api('/api/qr/generate',{method:'POST',body});
     showQR(r.qr_token, r.expires_in_seconds);
-  } catch (e) {
-    toast("QR gen failed: " + e.message);
-  }
+  } catch(e){ toast('QR gen failed: '+e.message); }
 }
-
-function showQR(token, ttl) {
+function showQR(token, ttl){
   currentToken = token;
-  document.getElementById("qrTokenText").textContent = token;
-  // Use a public QR render for the demo. Production would render locally.
-  const qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=" +
-                encodeURIComponent(token);
-  document.getElementById("qrImg").src = qrUrl;
-  document.getElementById("qrModal").classList.add("show");
-
-  let secs = ttl;
-  document.getElementById("countdown").textContent = secs;
-  if (countdownTimer) clearInterval(countdownTimer);
-  countdownTimer = setInterval(() => {
-    secs--;
-    document.getElementById("countdown").textContent = secs;
-    if (secs <= 0) {
-      clearInterval(countdownTimer);
-      closeModal();
-      toast("QR expired - generate a new one");
-      loadWallet();
-    }
-  }, 1000);
+  $('qrTokenText').textContent = token;
+  $('qrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=210x210&data=${encodeURIComponent(token)}`;
+  $('qrModal').classList.add('show');
+  let s=ttl; $('countdown').textContent=s;
+  if(ticker) clearInterval(ticker);
+  ticker=setInterval(()=>{
+    s--; $('countdown').textContent=s;
+    if(s<=0){clearInterval(ticker);closeModal();toast('QR expired — generate a new one');loadWallet();}
+  },1000);
 }
-
-function closeModal(e) {
-  if (e && e.target.id !== "qrModal") return;
-  document.getElementById("qrModal").classList.remove("show");
-  if (countdownTimer) clearInterval(countdownTimer);
+function closeModal(e){
+  if(e&&e.target.id!=='qrModal') return;
+  $('qrModal').classList.remove('show');
+  if(ticker) clearInterval(ticker);
   loadWallet();
 }
-
-function copyToken() {
-  navigator.clipboard.writeText(currentToken).then(() => toast("Token copied"));
-}
-
-function escapeHtml(s) {
-  return (s || "").replace(/[&<>"']/g, c => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
-  })[c]);
-}
+function copyToken(){ navigator.clipboard.writeText(currentToken).then(()=>toast('Token copied')); }
 
 loadGuests();
 </script>
