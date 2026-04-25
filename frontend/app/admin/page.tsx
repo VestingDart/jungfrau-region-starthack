@@ -18,6 +18,17 @@ interface Batch {
   created_at: string;
 }
 
+interface PendingOffer {
+  id: string;
+  partner_name: string;
+  title: string;
+  description: string | null;
+  type: string;
+  partner_payout_rappen: number;
+  original_price_rappen: number | null;
+  created_at: string;
+}
+
 const CATEGORY_LABELS: Record<string, string> = {
   mountain_railway: 'Mountain Railway',
   activity: 'Activity',
@@ -43,6 +54,7 @@ export default function AdminPage() {
 
   const [partners, setPartners] = useState<PartnerRecord[]>([]);
   const [visiblePasswords, setVisiblePasswords] = useState<Set<string>>(new Set());
+  const [pendingOffers, setPendingOffers] = useState<PendingOffer[]>([]);
   const [showAddPartner, setShowAddPartner] = useState(false);
   const [addName, setAddName] = useState('');
   const [addUsername, setAddUsername] = useState('');
@@ -106,6 +118,36 @@ export default function AdminPage() {
     try { data = JSON.parse(text); } catch { data = { raw: text }; }
     if (!res.ok) throw new Error((data.error as string) || `HTTP ${res.status}`);
     return data;
+  }
+
+  async function loadPendingOffers() {
+    try {
+      const r = await apiFetch('/api/admin/offers/pending') as { offers: PendingOffer[] };
+      setPendingOffers(r.offers || []);
+    } catch (e: unknown) {
+      showToast('Load pending offers failed: ' + (e as Error).message);
+    }
+  }
+
+  async function approveOffer(id: string, title: string) {
+    try {
+      await apiFetch(`/api/admin/offers/${id}/approve`, { method: 'POST' });
+      showToast(`Approved: ${title}`);
+      loadPendingOffers();
+    } catch (e: unknown) {
+      showToast('Approve failed: ' + (e as Error).message);
+    }
+  }
+
+  async function rejectOffer(id: string, title: string) {
+    if (!confirm(`Reject offer "${title}"?`)) return;
+    try {
+      await apiFetch(`/api/admin/offers/${id}/reject`, { method: 'POST' });
+      showToast(`Rejected: ${title}`);
+      loadPendingOffers();
+    } catch (e: unknown) {
+      showToast('Reject failed: ' + (e as Error).message);
+    }
   }
 
   async function loadBatches() {
@@ -179,6 +221,7 @@ export default function AdminPage() {
     setAuthChecking(false);
     refreshPartners();
     loadBatches();
+    loadPendingOffers();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -269,6 +312,56 @@ export default function AdminPage() {
                     </tr>
                     );
                   })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        {/* Pending Offers section */}
+        <div className="card mb-card" style={{ animationDelay: '.07s' }}>
+          <div className="card-head">
+            <h2>
+              Pending Offers
+              {pendingOffers.length > 0 && (
+                <span style={{ marginLeft: '.6rem', background: 'var(--danger)', color: '#fff', borderRadius: 20, padding: '.1rem .55rem', fontSize: '.62rem', fontWeight: 800, verticalAlign: 'middle' }}>
+                  {pendingOffers.length}
+                </span>
+              )}
+            </h2>
+            <button className="btn btn-outline btn-sm" onClick={loadPendingOffers}>Refresh</button>
+          </div>
+          <div className="card-body" style={{ padding: 0 }}>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '.82rem', minWidth: 600 }}>
+                <thead>
+                  <tr>
+                    {['Partner', 'Title', 'Type', 'Payout', 'Submitted', 'Actions'].map(h => (
+                      <th key={h} style={{ padding: '.65rem .85rem', textAlign: 'left', fontSize: '.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--sub)', background: 'var(--sand)', borderBottom: '2px solid var(--line)' }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {pendingOffers.length === 0 ? (
+                    <tr><td colSpan={6} className="empty-msg">No offers pending approval</td></tr>
+                  ) : pendingOffers.map(o => (
+                    <tr key={o.id} style={{ borderBottom: '1px solid var(--line)' }}>
+                      <td style={{ padding: '.72rem .85rem', fontWeight: 700 }}>{o.partner_name}</td>
+                      <td style={{ padding: '.72rem .85rem' }}>
+                        <div style={{ fontWeight: 600 }}>{o.title}</div>
+                        {o.description && <div style={{ fontSize: '.72rem', color: 'var(--sub)', marginTop: '.15rem' }}>{o.description}</div>}
+                      </td>
+                      <td style={{ padding: '.72rem .85rem' }}><span className="pill pill-draft">{o.type}</span></td>
+                      <td style={{ padding: '.72rem .85rem', fontWeight: 700 }}>CHF {(o.partner_payout_rappen / 100).toFixed(2)}</td>
+                      <td style={{ padding: '.72rem .85rem', fontSize: '.75rem', color: 'var(--sub)' }}>{new Date(o.created_at).toLocaleString('en-CH', { dateStyle: 'short', timeStyle: 'short' })}</td>
+                      <td style={{ padding: '.72rem .85rem' }}>
+                        <div style={{ display: 'flex', gap: '.4rem' }}>
+                          <button onClick={() => approveOffer(o.id, o.title)} style={{ background: 'var(--pine)', color: '#fff', border: 'none', padding: '.28rem .7rem', borderRadius: 6, fontSize: '.72rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Approve</button>
+                          <button onClick={() => rejectOffer(o.id, o.title)} style={{ background: 'transparent', color: 'var(--danger)', border: '1px solid rgba(197,32,46,.3)', padding: '.28rem .7rem', borderRadius: 6, fontSize: '.72rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Reject</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>

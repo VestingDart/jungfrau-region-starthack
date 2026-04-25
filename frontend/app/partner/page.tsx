@@ -14,6 +14,7 @@ interface Offer {
   original_price_rappen: number | null;
   image_hint: string | null;
   active: boolean;
+  status: string;
 }
 
 interface Redemption {
@@ -265,7 +266,7 @@ export default function PartnerPage() {
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={offerImg(o.title, o.image_hint)} alt={esc(o.title)} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                         <span style={{ position: 'absolute', top: '.65rem', left: '.65rem', background: 'rgba(14,28,46,.7)', backdropFilter: 'blur(4px)', color: '#fff', padding: '.2rem .55rem', borderRadius: 5, fontSize: '.62rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.06em' }}>{o.type === 'entitlement' ? 'Included' : 'Wallet'}</span>
-                        <span style={{ position: 'absolute', top: '.65rem', right: '.65rem', background: o.active ? 'var(--pine)' : 'var(--sub)', color: '#fff', padding: '.2rem .55rem', borderRadius: 5, fontSize: '.62rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.06em' }}>{o.active ? 'active' : 'inactive'}</span>
+                        <span style={{ position: 'absolute', top: '.65rem', right: '.65rem', background: o.status === 'active' ? 'var(--pine)' : o.status === 'pending' ? 'var(--gold)' : 'var(--danger)', color: '#fff', padding: '.2rem .55rem', borderRadius: 5, fontSize: '.62rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.06em' }}>{o.status === 'active' ? 'active' : o.status === 'pending' ? 'pending approval' : 'rejected'}</span>
                       </div>
                       <div style={{ padding: '1rem 1.1rem 1.25rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
                         <div style={{ fontSize: '.95rem', fontWeight: 700, color: 'var(--text)', lineHeight: 1.3, marginBottom: '.35rem' }}>{o.title}</div>
@@ -275,7 +276,7 @@ export default function PartnerPage() {
                             CHF {payout}
                             {disc ? <span style={{ fontSize: '.68rem', fontWeight: 500, color: 'var(--sub)' }}>&nbsp;vs CHF {orig ? (orig / 100).toFixed(2) : ''}</span> : null}
                           </div>
-                          {o.active && <button onClick={() => removeOffer(o.id)} style={{ background: 'transparent', color: 'var(--danger)', border: '1px solid rgba(197,32,46,.3)', padding: '.28rem .7rem', borderRadius: 6, fontSize: '.72rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Remove</button>}
+                          {o.status !== 'pending' && <button onClick={() => removeOffer(o.id)} style={{ background: 'transparent', color: 'var(--danger)', border: '1px solid rgba(197,32,46,.3)', padding: '.28rem .7rem', borderRadius: 6, fontSize: '.72rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Remove</button>}
                         </div>
                       </div>
                     </div>

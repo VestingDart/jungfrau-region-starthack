@@ -302,8 +302,8 @@ def partner_create_offer():
             """INSERT INTO offers (id, partner_id, title, description, type,
                                    guest_price_rappen, partner_payout_rappen,
                                    original_price_rappen, image_hint,
-                                   active, created_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)""",
+                                   active, status, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'pending', ?)""",
             (offer_id, partner["id"], title, description, offer_type,
              db.chf_to_rappen(price_chf), db.chf_to_rappen(price_chf),
              orig_rappen, image_hint, db.utcnow_iso()),
@@ -578,6 +578,54 @@ def admin_get_pain001(batch_id):
         from flask import Response
         return Response(content, mimetype="application/xml",
                         headers={"Content-Disposition": f"inline; filename={os.path.basename(path)}"})
+    finally:
+        conn.close()
+
+
+@app.route("/api/admin/offers/pending", methods=["GET"])
+def admin_list_pending_offers():
+    _require_admin()
+    conn = db.get_connection()
+    try:
+        rows = conn.execute(
+            """SELECT o.*, p.name AS partner_name
+               FROM offers o JOIN partners p ON p.id = o.partner_id
+               WHERE o.status = 'pending'
+               ORDER BY o.created_at DESC"""
+        ).fetchall()
+        return jsonify({"offers": [dict(r) for r in rows]})
+    finally:
+        conn.close()
+
+
+@app.route("/api/admin/offers/<offer_id>/approve", methods=["POST"])
+def admin_approve_offer(offer_id):
+    _require_admin()
+    conn = db.get_connection()
+    try:
+        result = conn.execute(
+            "UPDATE offers SET active = 1, status = 'active' WHERE id = ? AND status = 'pending'",
+            (offer_id,),
+        )
+        if result.rowcount == 0:
+            abort(404, description="offer not found or not pending")
+        return jsonify({"ok": True})
+    finally:
+        conn.close()
+
+
+@app.route("/api/admin/offers/<offer_id>/reject", methods=["POST"])
+def admin_reject_offer(offer_id):
+    _require_admin()
+    conn = db.get_connection()
+    try:
+        result = conn.execute(
+            "UPDATE offers SET active = 0, status = 'rejected' WHERE id = ? AND status = 'pending'",
+            (offer_id,),
+        )
+        if result.rowcount == 0:
+            abort(404, description="offer not found or not pending")
+        return jsonify({"ok": True})
     finally:
         conn.close()
 

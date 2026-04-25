@@ -96,6 +96,7 @@ CREATE TABLE IF NOT EXISTS offers (
     eligibility_rules    TEXT NOT NULL DEFAULT '{}',  -- JSON
     redemption_rules     TEXT NOT NULL DEFAULT '{}',  -- JSON
     active               INTEGER NOT NULL DEFAULT 1,
+    status               TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('pending','active','rejected')),
     created_at           TEXT NOT NULL
 );
 
@@ -213,6 +214,7 @@ def init_db():
         for stmt in (
             "ALTER TABLE offers ADD COLUMN original_price_rappen INTEGER",
             "ALTER TABLE offers ADD COLUMN image_hint TEXT",
+            "ALTER TABLE offers ADD COLUMN status TEXT NOT NULL DEFAULT 'active'",
         ):
             try:
                 conn.execute(stmt)
