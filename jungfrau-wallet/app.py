@@ -361,15 +361,16 @@ def mock_pay(topup_id):
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         background: #F2EFE8;
         min-height: 100vh;
+        padding: 80px 1rem 2rem;
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
-        padding: 1rem;
       }
+      @keyframes rise { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
       .navbar {
-        position: fixed; top: 0; left: 0; right: 0; height: 56px;
+        position: fixed; top: 0; left: 0; right: 0; height: 56px; z-index: 50;
         background: rgba(14,28,46,.96);
+        backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
         display: flex; align-items: center; padding: 0 1.5rem;
         border-bottom: 1px solid rgba(255,255,255,.07);
       }
@@ -383,20 +384,19 @@ def mock_pay(topup_id):
         width: 100%;
         max-width: 420px;
         overflow: hidden;
-        margin-top: 56px;
-        animation: rise .35s cubic-bezier(.4,0,.2,1) both;
+        animation: rise .4s cubic-bezier(.4,0,.2,1) both;
       }
-      @keyframes rise { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
       .header {
         background: linear-gradient(135deg, #0E1C2E 0%, #1B3259 100%);
         padding: 2rem 2rem 1.75rem;
         text-align: center;
         color: #fff;
+        animation: rise .4s cubic-bezier(.4,0,.2,1) both;
       }
       .logo-line { font-size: .75rem; font-weight: 900; letter-spacing: .18em; text-transform: uppercase; color: rgba(255,255,255,.45); margin-bottom: 1rem; }
       .header-title { font-size: 1.4rem; font-weight: 900; letter-spacing: -.02em; }
       .header-sub { font-size: .78rem; color: rgba(255,255,255,.5); margin-top: .3rem; letter-spacing: .03em; }
-      .body { padding: 1.75rem; }
+      .body { padding: 1.75rem; animation: rise .4s cubic-bezier(.4,0,.2,1) .1s both; }
       .amount-box {
         background: #F2EFE8;
         border-radius: 12px;
@@ -404,11 +404,12 @@ def mock_pay(topup_id):
         text-align: center;
         margin-bottom: 1.5rem;
         border: 1px solid #DDD9D2;
+        animation: rise .4s cubic-bezier(.4,0,.2,1) .15s both;
       }
       .amount-label { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #64748B; margin-bottom: .4rem; }
       .amount-value { font-size: 2.4rem; font-weight: 900; color: #0E1C2E; letter-spacing: -.03em; line-height: 1; }
-      .amount-currency { font-size: 1rem; font-weight: 700; color: #64748B; margin-right: .3rem; vertical-align: super; font-size: 1.1rem; }
-      .field { margin-bottom: 1rem; }
+      .amount-currency { font-size: 1.1rem; font-weight: 700; color: #64748B; margin-right: .3rem; vertical-align: super; }
+      .field { margin-bottom: 1rem; animation: rise .4s cubic-bezier(.4,0,.2,1) .2s both; }
       .field label { display: block; font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #64748B; margin-bottom: .4rem; }
       .field input {
         width: 100%;
@@ -437,6 +438,7 @@ def mock_pay(topup_id):
         transition: background .15s, transform .1s;
         font-family: inherit;
         letter-spacing: .01em;
+        animation: rise .4s cubic-bezier(.4,0,.2,1) .25s both;
       }
       .btn-pay:hover { background: #2D5396; }
       .btn-pay:active { transform: scale(.98); }
@@ -448,6 +450,7 @@ def mock_pay(topup_id):
         font-size: .68rem;
         color: #94a3b8;
         margin-top: 1.1rem;
+        animation: rise .4s cubic-bezier(.4,0,.2,1) .3s both;
       }
       .footer-note { text-align: center; font-size: .68rem; color: #94a3b8; margin-top: 1rem; font-family: ui-monospace, monospace; }
     </style>

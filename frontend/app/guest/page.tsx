@@ -524,14 +524,17 @@ export default function GuestPage() {
                     </div>
                   </div>
                 </div>
-                <div style={{ position: 'absolute', inset: 0, borderRadius: 16, overflow: 'hidden', backfaceVisibility: 'hidden', boxShadow: '0 10px 40px rgba(14,28,46,.32)', transform: 'rotateY(180deg)', background: 'linear-gradient(150deg, #0a1625 0%, #1B3259 100%)' }}>
-                  <div style={{ height: 38, background: 'rgba(0,0,0,.45)', marginTop: 30 }} />
-                  <div style={{ padding: '.8rem 1.3rem', display: 'flex', flexDirection: 'column', gap: '.35rem', color: '#fff' }}>
-                    <div style={{ fontSize: '.92rem', fontWeight: 700 }}>{cbName}</div>
-                    <div style={{ fontSize: '.68rem', opacity: .5, textTransform: 'uppercase', letterSpacing: '.06em' }}>{cbValidity}</div>
-                    <div style={{ background: '#fff', display: 'inline-block', padding: 4, borderRadius: 6, marginTop: '.3rem', lineHeight: 0 }}>
+                <div style={{ position: 'absolute', inset: 0, borderRadius: 16, overflow: 'hidden', backfaceVisibility: 'hidden', boxShadow: '0 10px 40px rgba(14,28,46,.32)', transform: 'rotateY(180deg)', background: 'linear-gradient(150deg, #0a1625 0%, #1B3259 100%)', display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ height: 20, background: 'rgba(0,0,0,.5)', marginTop: 16, flexShrink: 0 }} />
+                  <div style={{ flex: 1, padding: '.7rem 1.1rem .6rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#fff' }}>
+                    <div style={{ flex: 1, minWidth: 0, paddingRight: '.75rem' }}>
+                      <div style={{ fontSize: '.92rem', fontWeight: 700, marginBottom: '.25rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cbName}</div>
+                      <div style={{ fontSize: '.62rem', opacity: .5, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: '.5rem' }}>{cbValidity}</div>
+                      <div style={{ fontFamily: 'ui-monospace,monospace', fontSize: '.58rem', opacity: .35, letterSpacing: '.08em' }}>{cardNumber}</div>
+                    </div>
+                    <div style={{ background: '#fff', padding: 4, borderRadius: 7, lineHeight: 0, flexShrink: 0 }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={`https://api.qrserver.com/v1/create-qr-code/?size=66x66&data=${encodeURIComponent(cardNumber)}`} alt="Card QR" style={{ width: 66, height: 66, display: 'block' }} />
+                      <img src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(cardNumber)}`} alt="Card QR" style={{ width: 100, height: 100, display: 'block' }} />
                     </div>
                   </div>
                 </div>
