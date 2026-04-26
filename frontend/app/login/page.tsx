@@ -120,15 +120,15 @@ export default function LoginPage() {
       </div>
 
       {/* ── Form panel (right half) ── */}
-      <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '48%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', overflowY: 'auto', zIndex: 2 }}>
+      <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '48%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '3rem 2rem 2rem', overflowY: 'auto', zIndex: 2 }}>
         <div style={{ width: '100%', maxWidth: 420 }}>
 
-          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-            <h1 style={{ fontSize: '1.6rem', fontWeight: 900, color: 'var(--night)', letterSpacing: '-.025em', marginBottom: '.3rem' }}>Welcome back</h1>
-            <p style={{ color: 'var(--sub)', fontSize: '.875rem' }}>Sign in to your JungfrauPass account</p>
+          <div style={{ textAlign: 'center', marginBottom: '2rem', animation: 'rise .45s var(--ease) both' }}>
+            <h1 style={{ fontSize: '1.6rem', fontWeight: 900, color: 'var(--night)', letterSpacing: '-.025em', marginBottom: '.3rem' }}>Welcome to JungfrauPass</h1>
+            <p style={{ color: 'var(--sub)', fontSize: '.875rem' }}>Sign in or register to get started</p>
           </div>
 
-          <div style={{ background: '#fff', borderRadius: 20, boxShadow: '0 8px 40px rgba(14,28,46,.12)', padding: '2rem' }}>
+          <div style={{ background: '#fff', borderRadius: 20, boxShadow: '0 8px 40px rgba(14,28,46,.12)', padding: '2rem', animation: 'rise .45s var(--ease) .1s both' }}>
 
             {/* tabs */}
             <div style={{ display: 'flex', background: 'var(--sand)', borderRadius: 10, padding: 4, marginBottom: '1.5rem' }}>
@@ -144,6 +144,9 @@ export default function LoginPage() {
                 </button>
               ))}
             </div>
+
+            {/* Tab content — key forces remount on tab change to replay animation */}
+            <div key={tab} style={{ animation: 'rise .28s var(--ease) both' }}>
 
             {/* Quick demo login buttons */}
             <div style={{ marginBottom: '1.25rem' }}>
@@ -230,6 +233,7 @@ export default function LoginPage() {
                 </Link>
               </div>
             )}
+            </div>{/* end animated tab content */}
           </div>
         </div>
       </div>
