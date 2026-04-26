@@ -420,6 +420,15 @@ main {
   text-align: center; font-size: .7rem; color: var(--sub);
   margin-top: .55rem; letter-spacing: .05em;
 }
+.add-to-wallet-btn {
+  display: flex; align-items: center; justify-content: center; gap: .5rem;
+  width: 100%; margin-top: 1rem; padding: .7rem 1rem;
+  background: #000; color: #fff; border: none; border-radius: 10px;
+  font-weight: 700; font-size: .875rem; cursor: pointer;
+  font-family: inherit; letter-spacing: .01em;
+  transition: opacity .2s;
+}
+.add-to-wallet-btn:hover { opacity: .82; }
 
 /* ── Section 3: Activity ── */
 .wps-activity { padding: 1.5rem; }
@@ -504,7 +513,7 @@ main {
         <path d="M16 7V5a2 2 0 0 0-4 0v2"/>
         <circle cx="16" cy="14" r="1.5" fill="currentColor" stroke="none"/>
       </svg>
-      My Wallet
+      mywallet
     </button>
     <a class="nav-link" href="/partner">Partner</a>
     <a class="nav-link" href="/admin">Admin</a>
@@ -630,6 +639,12 @@ main {
         </div>
       </div>
       <div class="flip-hint">Tap card to flip</div>
+      <button class="add-to-wallet-btn" onclick="downloadPass()">
+        <svg viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px;flex-shrink:0">
+          <path d="M19.5 3.75H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V6a2.25 2.25 0 0 0-2.25-2.25ZM4.5 5.25h15a.75.75 0 0 1 .75.75v1.5H3.75V6a.75.75 0 0 1 .75-.75Zm15 13.5H4.5a.75.75 0 0 1-.75-.75V9.75h16.5V18a.75.75 0 0 1-.75.75ZM6 14.25a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1-.75-.75Zm0 2.25a.75.75 0 0 1 .75-.75h2.25a.75.75 0 0 1 0 1.5H6.75A.75.75 0 0 1 6 16.5Z"/>
+        </svg>
+        Add to Wallet
+      </button>
     </div>
 
     <!-- Section 3: Recent activity -->
@@ -873,6 +888,17 @@ function closeModal(e){
   loadWallet();
 }
 function copyToken(){ navigator.clipboard.writeText(currentToken).then(()=>toast('Token copied')); }
+
+/* ── Download Apple Wallet pass ── */
+function downloadPass(){
+  if(!guestId) return toast('Still loading — try again in a moment');
+  const a = document.createElement('a');
+  a.href = `/api/wallet/${guestId}/pass.pkpass`;
+  a.download = 'jungfrau-guest-card.pkpass';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
 
 loadGuests();
 </script>

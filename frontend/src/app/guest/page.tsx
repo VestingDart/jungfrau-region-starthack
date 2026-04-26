@@ -153,6 +153,17 @@ export default function GuestPage() {
     }, 1000);
   }
 
+  function downloadPass() {
+    if (!guestId) return showToast('Still loading — try again in a moment');
+    const name = encodeURIComponent(session?.name || 'Guest');
+    const a = document.createElement('a');
+    a.href = `/api/wallet/${guestId}/pass.pkpass?name=${name}`;
+    a.download = 'jungfrau-guest-card.pkpass';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
   function closeModal() {
     setQrOpen(false);
     if (tickerRef.current) clearInterval(tickerRef.current);
@@ -214,7 +225,7 @@ export default function GuestPage() {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 17, height: 17, flexShrink: 0 }}>
               <rect x="2" y="7" width="20" height="14" rx="2.5" /><path d="M16 7V5a2 2 0 0 0-4 0v2" /><circle cx="16" cy="14" r="1.5" fill="currentColor" stroke="none" />
             </svg>
-            My Wallet
+            mywallet
           </button>
           <button
             onClick={signOut}
@@ -396,6 +407,21 @@ export default function GuestPage() {
               </div>
             </div>
             <div style={{ textAlign: 'center', fontSize: '.7rem', color: 'var(--sub)', marginTop: '.55rem', letterSpacing: '.05em' }}>Tap card to flip</div>
+            <button
+              onClick={downloadPass}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.5rem',
+                width: '100%', marginTop: '1rem', padding: '.7rem 1rem',
+                background: '#000', color: '#fff', border: 'none', borderRadius: 10,
+                fontWeight: 700, fontSize: '.875rem', cursor: 'pointer', fontFamily: 'inherit',
+                letterSpacing: '.01em',
+              }}
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: 18, height: 18, flexShrink: 0 }}>
+                <path d="M19.5 3.75H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V6a2.25 2.25 0 0 0-2.25-2.25ZM4.5 5.25h15a.75.75 0 0 1 .75.75v1.5H3.75V6a.75.75 0 0 1 .75-.75Zm15 13.5H4.5a.75.75 0 0 1-.75-.75V9.75h16.5V18a.75.75 0 0 1-.75.75ZM6 14.25a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1-.75-.75Zm0 2.25a.75.75 0 0 1 .75-.75h2.25a.75.75 0 0 1 0 1.5H6.75A.75.75 0 0 1 6 16.5Z"/>
+              </svg>
+              Add to Wallet
+            </button>
           </div>
 
           <div style={{ padding: '1.5rem' }}>

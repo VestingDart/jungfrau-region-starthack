@@ -23,6 +23,7 @@ import db
 import auth
 import services
 import settlement
+import passkit
 
 
 ADMIN_KEY = os.environ.get("WALLET_ADMIN_KEY", "admin-dev-key")
@@ -195,6 +196,45 @@ def generate_qr():
         return jsonify({"qr_token": token, "jti": jti, "expires_in_seconds": auth.QR_TTL_SECONDS})
     finally:
         conn.close()
+
+
+@app.route("/api/wallet/<guest_id>/pass.pkpass", methods=["GET"])
+def download_pass(guest_id):
+    """Generate and stream an Apple Wallet .pkpass for the guest."""
+    conn = db.get_connection()
+    try:
+        guest = conn.execute(
+            "SELECT * FROM guests WHERE id = ?", (guest_id,)
+        ).fetchone()
+        if not guest:
+            abort(404, description="guest not found")
+
+        wallet_row = conn.execute(
+            "SELECT balance_rappen FROM guest_wallets WHERE guest_id = ?", (guest_id,)
+        ).fetchone()
+        balance_chf = (wallet_row["balance_rappen"] / 100) if wallet_row else 0.0
+    finally:
+        conn.close()
+
+    guest_name = request.args.get("name", guest["guest_card_id"])
+
+    pkpass_bytes = passkit.build_pkpass(
+        guest_name=guest_name,
+        card_number=guest["guest_card_id"],
+        balance_chf=balance_chf,
+        check_in=guest["check_in"],
+        check_out=guest["check_out"],
+        guest_id=guest["id"],
+    )
+
+    from flask import Response
+    return Response(
+        pkpass_bytes,
+        mimetype="application/vnd.apple.pkpass",
+        headers={
+            "Content-Disposition": 'attachment; filename="jungfrau-guest-card.pkpass"',
+        },
+    )
 
 
 # ---- Partner endpoints ------------------------------------------------------

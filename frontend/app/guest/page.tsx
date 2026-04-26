@@ -111,6 +111,17 @@ export default function GuestPage() {
   function closeModal() { setQrOpen(false); if (tickerRef.current) clearInterval(tickerRef.current); loadWallet(); }
   function copyToken() { navigator.clipboard.writeText(qrToken).then(() => showToast(t('guest.tokenCopied'))); }
 
+  function downloadPass() {
+    if (!guestId) return showToast('Still loading — try again in a moment');
+    const name = encodeURIComponent(session?.name || 'Guest');
+    const a = document.createElement('a');
+    a.href = `/api/wallet/${guestId}/pass.pkpass?name=${name}`;
+    a.download = 'jungfrau-guest-card.pkpass';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
   useEffect(() => {
     setSeason(getStoredSeason());
     const s = getSession('guest');
@@ -174,7 +185,7 @@ export default function GuestPage() {
         <div className="nav-right">
           <span style={{ fontSize: '.82rem', color: 'rgba(255,255,255,.6)', fontWeight: 500 }}>{t('guest.hello')}, {session?.name}</span>
           <button onClick={() => setWalletOpen(o => !o)} style={{ background: 'var(--gold)', color: '#fff', border: 'none', padding: '.42rem 1.1rem', borderRadius: 22, fontWeight: 700, fontSize: '.82rem', cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 2px 14px rgba(196,149,14,.4)' }}>
-            {wallet ? `CHF ${(wallet.balance_chf ?? 0).toFixed(2)}` : t('guest.myWallet')}
+            mywallet
           </button>
           <LangToggle dark />
           <button onClick={signOut} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,.18)', color: 'rgba(255,255,255,.65)', padding: '.38rem .85rem', borderRadius: 8, fontSize: '.8rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
@@ -531,6 +542,15 @@ export default function GuestPage() {
                 </div>
               </div>
             </div>
+            <button
+              onClick={downloadPass}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.5rem', width: '100%', marginTop: '1rem', padding: '.7rem 1rem', background: '#000', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 700, fontSize: '.875rem', cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '.01em' }}
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: 18, height: 18, flexShrink: 0 }}>
+                <path d="M19.5 3.75H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V6a2.25 2.25 0 0 0-2.25-2.25ZM4.5 5.25h15a.75.75 0 0 1 .75.75v1.5H3.75V6a.75.75 0 0 1 .75-.75Zm15 13.5H4.5a.75.75 0 0 1-.75-.75V9.75h16.5V18a.75.75 0 0 1-.75.75ZM6 14.25a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1-.75-.75Zm0 2.25a.75.75 0 0 1 .75-.75h2.25a.75.75 0 0 1 0 1.5H6.75A.75.75 0 0 1 6 16.5Z"/>
+              </svg>
+              Add to Wallet
+            </button>
           </div>
           <div style={{ padding: '1.5rem' }}>
             <div style={{ fontSize: '.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--sub)', marginBottom: '.75rem' }}>{t('guest.recentActivity')}</div>
