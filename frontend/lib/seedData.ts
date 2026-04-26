@@ -27,9 +27,11 @@ export const GUEST_SEED: GuestSeed[] = [
 ];
 
 export const PARTNER_SEED: PartnerSeed[] = [
-  { id: 'partner-1', name: 'Harder Kulm Mountain Railway', username: 'harderkulm', password: 'partner123', category: 'mountain_railway', status: 'active', flaskApiKey: 'key-jungfraubahnen' },
-  { id: 'partner-2', name: 'Lake Thun Cruise',             username: 'thuncruise',  password: 'partner456', category: 'cruise',           status: 'active', flaskApiKey: 'key-outdoor'        },
-  { id: 'partner-3', name: 'BOB Railway',                  username: 'bobrailway',  password: 'partner789', category: 'transport',        status: 'active', flaskApiKey: 'key-skirental'      },
+  { id: 'partner-1', name: 'Jungfraubahnen',               username: 'jungfraubahnen', password: 'partner123', category: 'mountain_railway', status: 'active', flaskApiKey: 'key-jungfraubahnen' },
+  { id: 'partner-2', name: 'Outdoor Interlaken',           username: 'outdoor',        password: 'partner456', category: 'outdoor',          status: 'active', flaskApiKey: 'key-outdoor'        },
+  { id: 'partner-3', name: 'Wengen Ski Rental',            username: 'wengenskirental',password: 'partner789', category: 'ski_rental',       status: 'active', flaskApiKey: 'key-skirental'      },
+  { id: 'partner-4', name: 'Bäckerei Müller Grindelwald',  username: 'baeckerei',      password: 'partner321', category: 'food',             status: 'active', flaskApiKey: 'key-baeckerei'      },
+  { id: 'partner-5', name: 'Restaurant Bergblick Mürren',  username: 'bergblick',      password: 'partner654', category: 'restaurant',       status: 'active', flaskApiKey: 'key-bergblick'      },
 ];
 
 export const ADMIN_CREDENTIALS = { username: 'admin', password: 'admin123' };

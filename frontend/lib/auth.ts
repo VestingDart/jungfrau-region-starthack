@@ -32,7 +32,8 @@ export interface PartnerRecord {
   flaskApiKey: string;
 }
 
-const KEYS = { GUESTS: 'jfr_guests', PARTNERS: 'jfr_partners' } as const;
+const KEYS = { GUESTS: 'jfr_guests', PARTNERS: 'jfr_partners', PARTNER_VER: 'jfr_partners_ver' } as const;
+const PARTNER_SEED_VERSION = '2';
 
 function sessionKey(role: Role) { return `jfr_session_${role}`; }
 
@@ -54,10 +55,12 @@ function saveGuests(guests: GuestRecord[]): void {
 export function getPartners(): PartnerRecord[] {
   if (typeof window === 'undefined') return PARTNER_SEED as PartnerRecord[];
   try {
+    const ver = localStorage.getItem(KEYS.PARTNER_VER);
     const stored = localStorage.getItem(KEYS.PARTNERS);
-    if (stored) return JSON.parse(stored);
+    if (stored && ver === PARTNER_SEED_VERSION) return JSON.parse(stored);
   } catch { /* ignore */ }
   localStorage.setItem(KEYS.PARTNERS, JSON.stringify(PARTNER_SEED));
+  localStorage.setItem(KEYS.PARTNER_VER, PARTNER_SEED_VERSION);
   return PARTNER_SEED as PartnerRecord[];
 }
 
