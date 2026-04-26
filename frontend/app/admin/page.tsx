@@ -8,6 +8,9 @@ import type { Session, PartnerRecord } from '@/lib/auth';
 import LangToggle from '@/components/LangToggle';
 import { useLanguage } from '@/lib/language';
 import type { TranslationKey } from '@/lib/i18n';
+import { ACTIVITIES } from '@/lib/activities';
+import { getStoredSeason, storeSeason } from '@/lib/season';
+import type { Season } from '@/lib/season';
 
 const AdminActivityMap = dynamic(() => import('@/components/AdminActivityMap'), { ssr: false });
 
@@ -64,6 +67,7 @@ export default function AdminPage() {
     last_viewed: string;
   }
   const [activityStats, setActivityStats] = useState<ActivityStat[]>([]);
+  const [season, setSeason] = useState<Season>('summer');
   const [showAddPartner, setShowAddPartner] = useState(false);
   const [addName, setAddName] = useState('');
   const [addUsername, setAddUsername] = useState('');
@@ -245,6 +249,7 @@ export default function AdminPage() {
     if (!s) { router.replace('/login'); return; }
     setSession(s);
     setAuthChecking(false);
+    setSeason(getStoredSeason());
     refreshPartners();
     loadBatches();
     loadPendingOffers();
@@ -587,12 +592,29 @@ export default function AdminPage() {
 
         {/* ── Activity Popularity ── */}
         <section style={{ marginBottom: '2.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1.25rem', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1.25rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
             <div style={{ flexShrink: 0 }}>
               <div style={{ fontSize: '.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.15em', color: 'var(--pine)', marginBottom: '.35rem' }}>{t('admin.guestInsights')}</div>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--night)', letterSpacing: '-.03em', lineHeight: 1 }}>{t('admin.activityPopularity')}</h2>
             </div>
-            <div style={{ flex: 1, height: 1, background: 'var(--line)', marginBottom: '.65rem' }} />
+            <div style={{ flex: 1, height: 1, background: 'var(--line)', marginBottom: '.65rem', minWidth: 40 }} />
+            {/* Season toggle */}
+            <div style={{ display: 'flex', background: 'var(--sand)', borderRadius: 22, padding: 3, marginBottom: '.65rem', flexShrink: 0 }}>
+              {(['summer', 'winter'] as Season[]).map(s => {
+                const active = season === s;
+                const icon = s === 'summer' ? '☀️' : '❄️';
+                const label = t(s === 'summer' ? 'guest.season.summer' : 'guest.season.winter');
+                return (
+                  <button
+                    key={s}
+                    onClick={() => { setSeason(s); storeSeason(s); }}
+                    style={{ padding: '.32rem .85rem', borderRadius: 20, border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: '.78rem', fontWeight: 700, transition: 'all .2s', background: active ? (s === 'summer' ? '#C4950E' : '#2D5396') : 'transparent', color: active ? '#fff' : 'var(--sub)', boxShadow: active ? '0 2px 8px rgba(0,0,0,.12)' : 'none' }}
+                  >
+                    {icon} {label}
+                  </button>
+                );
+              })}
+            </div>
             <button
               onClick={loadActivityStats}
               style={{ background: 'transparent', border: '1px solid var(--line)', color: 'var(--sub)', padding: '.38rem .75rem', borderRadius: 7, fontSize: '.72rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', marginBottom: '.65rem', flexShrink: 0 }}
@@ -601,68 +623,76 @@ export default function AdminPage() {
             </button>
           </div>
 
-          <div className="activity-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', alignItems: 'start' }}>
-            {/* Bar chart */}
-            <div style={{ background: '#fff', borderRadius: 'var(--r)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden', animation: 'rise .45s var(--ease) both', animationDelay: '.08s' }}>
-              <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--line)', background: 'var(--sand)' }}>
-                <div style={{ fontSize: '.6rem', fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '.12em', color: 'var(--sub)' }}>{t('admin.rankedByViews')}</div>
-              </div>
-              <div style={{ padding: '1.5rem' }}>
-                {activityStats.length === 0 ? (
-                  <div className="empty-msg">{t('admin.noActivityViews')}</div>
-                ) : (() => {
-                  const max = activityStats[0].views;
-                  return (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                      {activityStats.map((s, i) => {
-                        const pct = Math.round((s.views / max) * 100);
-                        const color = CAT_COLORS[s.category] || 'var(--navy)';
-                        const icon = CAT_ICONS[s.category] || '📍';
-                        const catLabel = t(('guest.cat.' + s.category) as TranslationKey) || s.category;
-                        const lastSeen = new Date(s.last_viewed).toLocaleString('de-CH', { dateStyle: 'short', timeStyle: 'short' });
-                        return (
-                          <div key={s.activity_id} style={{ animation: `rise .35s var(--ease) ${i * .04}s both` }}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.4rem' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', minWidth: 0, flex: 1 }}>
-                                <span style={{ fontSize: '.95rem', flexShrink: 0 }}>{icon}</span>
-                                <span style={{ fontSize: '.82rem', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.activity_title}</span>
-                                <span style={{ flexShrink: 0, background: color + '1a', color, padding: '.1rem .45rem', borderRadius: 20, fontSize: '.6rem', fontWeight: 700 }}>{catLabel}</span>
+          {(() => {
+            const activitySeasonMap = Object.fromEntries(ACTIVITIES.map(a => [a.id, a.season]));
+            const seasonActivities = ACTIVITIES.filter(a => a.season === season || a.season === 'both');
+            const filteredStats = activityStats.filter(s => {
+              const as = activitySeasonMap[s.activity_id];
+              return !as || as === season || as === 'both';
+            });
+            const max = filteredStats.length > 0 ? filteredStats[0].views : 1;
+            return (
+              <div className="activity-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', alignItems: 'start' }}>
+                {/* Bar chart */}
+                <div style={{ background: '#fff', borderRadius: 'var(--r)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden', animation: 'rise .45s var(--ease) both', animationDelay: '.08s' }}>
+                  <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--line)', background: 'var(--sand)' }}>
+                    <div style={{ fontSize: '.6rem', fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '.12em', color: 'var(--sub)' }}>{t('admin.rankedByViews')}</div>
+                  </div>
+                  <div style={{ padding: '1.5rem' }}>
+                    {filteredStats.length === 0 ? (
+                      <div className="empty-msg">{t('admin.noActivityViews')}</div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        {filteredStats.map((s, i) => {
+                          const pct = Math.round((s.views / max) * 100);
+                          const color = CAT_COLORS[s.category] || 'var(--navy)';
+                          const icon = CAT_ICONS[s.category] || '📍';
+                          const catLabel = t(('guest.cat.' + s.category) as TranslationKey) || s.category;
+                          const lastSeen = new Date(s.last_viewed).toLocaleString('de-CH', { dateStyle: 'short', timeStyle: 'short' });
+                          return (
+                            <div key={s.activity_id} style={{ animation: `rise .35s var(--ease) ${i * .04}s both` }}>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.4rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', minWidth: 0, flex: 1 }}>
+                                  <span style={{ fontSize: '.95rem', flexShrink: 0 }}>{icon}</span>
+                                  <span style={{ fontSize: '.82rem', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.activity_title}</span>
+                                  <span style={{ flexShrink: 0, background: color + '1a', color, padding: '.1rem .45rem', borderRadius: 20, fontSize: '.6rem', fontWeight: 700 }}>{catLabel}</span>
+                                </div>
+                                <div style={{ flexShrink: 0, marginLeft: '1rem', textAlign: 'right' }}>
+                                  <div style={{ fontWeight: 800, fontSize: '.85rem', color: 'var(--text)' }}>{s.views} {s.views === 1 ? t('common.view') : t('common.views')}</div>
+                                  <div style={{ fontSize: '.62rem', color: 'var(--sub)', marginTop: '.05rem' }}>{t('common.last')}: {lastSeen}</div>
+                                </div>
                               </div>
-                              <div style={{ flexShrink: 0, marginLeft: '1rem', textAlign: 'right' }}>
-                                <div style={{ fontWeight: 800, fontSize: '.85rem', color: 'var(--text)' }}>{s.views} {s.views === 1 ? t('common.view') : t('common.views')}</div>
-                                <div style={{ fontSize: '.62rem', color: 'var(--sub)', marginTop: '.05rem' }}>{t('common.last')}: {lastSeen}</div>
+                              <div style={{ height: 9, background: 'var(--sand)', borderRadius: 99, overflow: 'hidden' }}>
+                                <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 99, transition: 'width .7s var(--ease)' }} />
                               </div>
                             </div>
-                            <div style={{ height: 9, background: 'var(--sand)', borderRadius: 99, overflow: 'hidden' }}>
-                              <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 99, transition: 'width .7s var(--ease)' }} />
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                })()}
-              </div>
-            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
 
-            {/* Bubble map */}
-            <div style={{ background: '#fff', borderRadius: 'var(--r)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden', animation: 'rise .45s var(--ease) both', animationDelay: '.14s' }}>
-              <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--line)', background: 'var(--sand)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ fontSize: '.6rem', fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '.12em', color: 'var(--sub)' }}>{t('admin.bubbleSize')}</div>
-                <div style={{ display: 'flex', gap: '.6rem', flexWrap: 'wrap' }}>
-                  {BUBBLE_LEGEND.map(([cat, color, icon]) => (
-                    <span key={cat} style={{ display: 'flex', alignItems: 'center', gap: '.25rem', fontSize: '.6rem', color: 'var(--sub)', fontWeight: 600 }}>
-                      <span style={{ width: 10, height: 10, borderRadius: '50%', background: color as string, display: 'inline-block', flexShrink: 0 }} />
-                      {icon} {t(('guest.cat.' + cat) as TranslationKey)}
-                    </span>
-                  ))}
+                {/* Bubble map */}
+                <div style={{ background: '#fff', borderRadius: 'var(--r)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden', animation: 'rise .45s var(--ease) both', animationDelay: '.14s' }}>
+                  <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--line)', background: 'var(--sand)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ fontSize: '.6rem', fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '.12em', color: 'var(--sub)' }}>{t('admin.bubbleSize')}</div>
+                    <div style={{ display: 'flex', gap: '.6rem', flexWrap: 'wrap' }}>
+                      {BUBBLE_LEGEND.filter(([cat]) => seasonActivities.some(a => a.category === cat)).map(([cat, color, icon]) => (
+                        <span key={cat} style={{ display: 'flex', alignItems: 'center', gap: '.25rem', fontSize: '.6rem', color: 'var(--sub)', fontWeight: 600 }}>
+                          <span style={{ width: 10, height: 10, borderRadius: '50%', background: color as string, display: 'inline-block', flexShrink: 0 }} />
+                          {icon} {t(('guest.cat.' + cat) as TranslationKey)}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div style={{ height: 420 }}>
+                    <AdminActivityMap stats={filteredStats} activities={seasonActivities} />
+                  </div>
                 </div>
               </div>
-              <div style={{ height: 420 }}>
-                <AdminActivityMap stats={activityStats} />
-              </div>
-            </div>
-          </div>
+            );
+          })()}
         </section>
 
         {/* ── Settlement Batches ── */}

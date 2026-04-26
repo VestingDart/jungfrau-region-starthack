@@ -102,6 +102,9 @@ const t = {
     'guest.diff.hard':          'Schwer',
     'guest.noActivities':       'Keine Aktivitäten in dieser Kategorie.',
     'guest.selectActivity':     'Wähle eine Aktivität aus der Liste',
+    'guest.season.label':       'Jahreszeit',
+    'guest.season.summer':      'Sommer',
+    'guest.season.winter':      'Winter',
 
     // ── Guest — Card ──────────────────────────────────────────
     'guest.guestCard':          'Gästekarte',
@@ -348,6 +351,9 @@ const t = {
     'guest.diff.hard':          'Hard',
     'guest.noActivities':       'No activities in this category.',
     'guest.selectActivity':     'Select an activity from the list',
+    'guest.season.label':       'Season',
+    'guest.season.summer':      'Summer',
+    'guest.season.winter':      'Winter',
 
     // ── Guest — Card ──────────────────────────────────────────
     'guest.guestCard':          'Guest Card',
