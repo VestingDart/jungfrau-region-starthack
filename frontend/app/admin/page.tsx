@@ -1,9 +1,15 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { getSession, clearSession, getPartners, addPartner, deletePartner } from '@/lib/auth';
 import type { Session, PartnerRecord } from '@/lib/auth';
+import LangToggle from '@/components/LangToggle';
+import { useLanguage } from '@/lib/language';
+import type { TranslationKey } from '@/lib/i18n';
+
+const AdminActivityMap = dynamic(() => import('@/components/AdminActivityMap'), { ssr: false });
 
 interface Batch {
   id: string;
@@ -29,25 +35,19 @@ interface PendingOffer {
   created_at: string;
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
-  mountain_railway: 'Mountain Railway',
-  activity: 'Activity',
-  transport: 'Transport',
-  cruise: 'Cruise',
-};
-
 function esc(s: string | null | undefined) {
   return (s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] || c));
 }
 
 export default function AdminPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [authChecking, setAuthChecking] = useState(true);
   const [session, setSession] = useState<Session | null>(null);
   const [adminKey, setAdminKey] = useState('admin-dev-key');
   const [batches, setBatches] = useState<Batch[]>([]);
   const [settlementResult, setSettlementResult] = useState<{ ok: boolean; msg: string } | null>(null);
-  const [xmlFileName, setXmlFileName] = useState('No file loaded');
+  const [xmlFileName, setXmlFileName] = useState('');
   const [xmlContent, setXmlContent] = useState('');
   const [toast, setToast] = useState('');
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -55,6 +55,15 @@ export default function AdminPage() {
   const [partners, setPartners] = useState<PartnerRecord[]>([]);
   const [visiblePasswords, setVisiblePasswords] = useState<Set<string>>(new Set());
   const [pendingOffers, setPendingOffers] = useState<PendingOffer[]>([]);
+
+  interface ActivityStat {
+    activity_id: string;
+    activity_title: string;
+    category: string;
+    views: number;
+    last_viewed: string;
+  }
+  const [activityStats, setActivityStats] = useState<ActivityStat[]>([]);
   const [showAddPartner, setShowAddPartner] = useState(false);
   const [addName, setAddName] = useState('');
   const [addUsername, setAddUsername] = useState('');
@@ -78,20 +87,30 @@ export default function AdminPage() {
     setPartners(getPartners());
   }
 
+  function getCategoryLabel(cat: string) {
+    const map: Record<string, TranslationKey> = {
+      mountain_railway: 'admin.cat.mountain',
+      activity:         'admin.cat.activity',
+      transport:        'admin.cat.transport',
+      cruise:           'admin.cat.cruise',
+    };
+    return map[cat] ? t(map[cat]) : cat;
+  }
+
   function handleAddPartner() {
     setAddError('');
     const name = addName.trim();
     const username = addUsername.trim();
     const password = addPassword.trim();
     const flaskApiKey = addFlaskKey.trim() || `key-${username}`;
-    if (!name || !username || !password) { setAddError('Name, username, and password are required.'); return; }
+    if (!name || !username || !password) { setAddError(t('admin.col.name') + ', ' + t('admin.col.username') + ', ' + t('admin.col.password') + ' required.'); return; }
     if (username.length < 3) { setAddError('Username must be at least 3 characters.'); return; }
     if (password.length < 6) { setAddError('Password must be at least 6 characters.'); return; }
     addPartner({ name, username, password, category: addCategory, flaskApiKey });
     refreshPartners();
     setShowAddPartner(false);
     setAddName(''); setAddUsername(''); setAddPassword(''); setAddFlaskKey('');
-    showToast('Partner added');
+    showToast(t('admin.partnerAdded'));
   }
 
   function togglePasswordVisibility(id: string) {
@@ -103,10 +122,10 @@ export default function AdminPage() {
   }
 
   function handleDeletePartner(id: string, name: string) {
-    if (!confirm(`Remove partner "${name}"? This cannot be undone.`)) return;
+    if (!confirm(t('admin.confirmRemove').replace('{name}', name))) return;
     deletePartner(id);
     refreshPartners();
-    showToast('Partner removed');
+    showToast(t('admin.partnerRemoved'));
   }
 
   async function apiFetch(path: string, opts: RequestInit = {}) {
@@ -125,29 +144,36 @@ export default function AdminPage() {
       const r = await apiFetch('/api/admin/offers/pending') as { offers: PendingOffer[] };
       setPendingOffers(r.offers || []);
     } catch (e: unknown) {
-      showToast('Load pending offers failed: ' + (e as Error).message);
+      showToast(t('common.error') + ': ' + (e as Error).message);
     }
   }
 
   async function approveOffer(id: string, title: string) {
     try {
       await apiFetch(`/api/admin/offers/${id}/approve`, { method: 'POST' });
-      showToast(`Approved: ${title}`);
+      showToast(t('common.approved') + ': ' + title);
       loadPendingOffers();
     } catch (e: unknown) {
-      showToast('Approve failed: ' + (e as Error).message);
+      showToast(t('common.error') + ': ' + (e as Error).message);
     }
   }
 
   async function rejectOffer(id: string, title: string) {
-    if (!confirm(`Reject offer "${title}"?`)) return;
+    if (!confirm(t('admin.confirmReject').replace('{title}', title))) return;
     try {
       await apiFetch(`/api/admin/offers/${id}/reject`, { method: 'POST' });
-      showToast(`Rejected: ${title}`);
+      showToast(t('common.rejected') + ': ' + title);
       loadPendingOffers();
     } catch (e: unknown) {
-      showToast('Reject failed: ' + (e as Error).message);
+      showToast(t('common.error') + ': ' + (e as Error).message);
     }
+  }
+
+  async function loadActivityStats() {
+    try {
+      const r = await apiFetch('/api/admin/activities/stats') as { stats: ActivityStat[] };
+      setActivityStats(r.stats || []);
+    } catch { /* silent — no data yet is fine */ }
   }
 
   async function loadBatches() {
@@ -155,7 +181,7 @@ export default function AdminPage() {
       const r = await apiFetch('/api/admin/settlement/batches') as { batches: Batch[] };
       setBatches(r.batches || []);
     } catch (e: unknown) {
-      showToast('Load batches failed: ' + (e as Error).message);
+      showToast(t('common.error') + ': ' + (e as Error).message);
     }
   }
 
@@ -166,27 +192,27 @@ export default function AdminPage() {
         body: JSON.stringify({ period_start: '2020-01-01', period_end: '2099-12-31' }),
       }) as { batches: Batch[]; total_chf: number; pain001_file: string };
       if (!r.batches.length) {
-        setSettlementResult({ ok: false, msg: 'No pending redemptions to settle.' });
+        setSettlementResult({ ok: false, msg: t('admin.settlementNoItems') });
       } else {
-        setSettlementResult({ ok: true, msg: `Created ${r.batches.length} batch(es) — CHF ${r.total_chf.toFixed(2)} total · ${r.pain001_file}` });
+        setSettlementResult({ ok: true, msg: `${t('admin.settlementOk')}: ${r.batches.length} batch(es) — CHF ${r.total_chf.toFixed(2)} · ${r.pain001_file}` });
         loadBatches();
       }
     } catch (e: unknown) {
-      showToast('Settlement failed: ' + (e as Error).message);
+      showToast(t('common.error') + ': ' + (e as Error).message);
     }
   }
 
   async function reseed() {
-    if (!confirm('Wipe and reseed all demo data? This cannot be undone.')) return;
+    if (!confirm(t('admin.confirmReseed'))) return;
     try {
       await apiFetch('/api/admin/seed', { method: 'POST' });
-      showToast('Reseeded — refresh other tabs');
+      showToast(t('admin.reseeded'));
       loadBatches();
       setSettlementResult(null);
       setXmlContent('');
-      setXmlFileName('No file loaded');
+      setXmlFileName('');
     } catch (e: unknown) {
-      showToast('Reseed failed: ' + (e as Error).message);
+      showToast(t('common.error') + ': ' + (e as Error).message);
     }
   }
 
@@ -198,19 +224,19 @@ export default function AdminPage() {
       setXmlFileName(ref + '.xml');
       setXmlContent(xml);
     } catch (e: unknown) {
-      showToast('Load XML failed: ' + (e as Error).message);
+      showToast(t('common.error') + ': ' + (e as Error).message);
     }
   }
 
   async function confirmBatch(batchId: string) {
-    const ref = prompt('Enter the bank transaction reference:', 'SIC-' + new Date().toISOString().slice(0, 10) + '-' + Math.floor(Math.random() * 10000));
+    const ref = prompt(t('admin.confirmBankRef'), 'SIC-' + new Date().toISOString().slice(0, 10) + '-' + Math.floor(Math.random() * 10000));
     if (!ref) return;
     try {
       await apiFetch('/api/admin/settlement/confirm', { method: 'POST', body: JSON.stringify({ batch_id: batchId, bank_transaction_ref: ref }) });
-      showToast('Confirmed — partners now see settled status');
+      showToast(t('admin.batchConfirmed'));
       loadBatches();
     } catch (e: unknown) {
-      showToast('Confirm failed: ' + (e as Error).message);
+      showToast(t('common.error') + ': ' + (e as Error).message);
     }
   }
 
@@ -222,6 +248,7 @@ export default function AdminPage() {
     refreshPartners();
     loadBatches();
     loadPendingOffers();
+    loadActivityStats();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -246,6 +273,10 @@ export default function AdminPage() {
     letterSpacing: '.1em', color: 'var(--sub)',
     background: 'var(--sand)', borderBottom: '2px solid var(--line)',
   };
+
+  const CAT_COLORS: Record<string, string> = { hiking: 'var(--pine)', skiing: 'var(--blue)', sightseeing: 'var(--gold)', adventure: 'var(--danger)' };
+  const CAT_ICONS: Record<string, string> = { hiking: '🥾', skiing: '⛷️', sightseeing: '🔭', adventure: '🧗' };
+  const BUBBLE_LEGEND: [string, string, string][] = [['hiking','#3D7252','🥾'],['skiing','#2D5396','⛷️'],['sightseeing','#C4950E','🔭'],['adventure','#C5202E','🧗']];
 
   return (
     <>
@@ -279,6 +310,7 @@ export default function AdminPage() {
         .pill-rejected { background: #fdecef; color: var(--danger); }
         @media(max-width:900px){
           .admin-top-grid { grid-template-columns: 1fr !important; }
+          .activity-grid { grid-template-columns: 1fr !important; }
           main { padding: 1.25rem 1rem 2.5rem !important; }
         }
       `}</style>
@@ -293,11 +325,12 @@ export default function AdminPage() {
           <span style={{ fontSize: '.82rem', color: 'rgba(255,255,255,.6)', fontWeight: 500 }}>
             {session?.name}
           </span>
+          <LangToggle dark />
           <button
             onClick={signOut}
             style={{ background: 'transparent', border: '1px solid rgba(255,255,255,.18)', color: 'rgba(255,255,255,.65)', padding: '.38rem .85rem', borderRadius: 8, fontSize: '.8rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
           >
-            Sign out
+            {t('common.signOut')}
           </button>
         </div>
       </nav>
@@ -311,34 +344,32 @@ export default function AdminPage() {
 
           <div style={{ animation: 'fadeUp .55s var(--ease) both', animationDelay: '.04s' }}>
             <span style={{ display: 'inline-block', background: 'var(--gold)', color: '#fff', padding: '.22rem .9rem', borderRadius: 24, fontSize: '.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.16em', marginBottom: '1.1rem', boxShadow: '0 3px 18px rgba(196,149,14,.45)' }}>
-              Admin Console
+              {t('admin.label')}
             </span>
           </div>
 
-          <h1 style={{ fontSize: 'clamp(2rem,4vw,3.2rem)', fontWeight: 900, color: '#fff', letterSpacing: '-.035em', lineHeight: 1.05, marginBottom: '.6rem', animation: 'fadeUp .62s var(--ease) both', animationDelay: '.13s' }}>
-            Settlement &amp; Partner<br />Management
+          <h1 style={{ fontSize: 'clamp(2rem,4vw,3.2rem)', fontWeight: 900, color: '#fff', letterSpacing: '-.035em', lineHeight: 1.05, marginBottom: '.6rem', animation: 'fadeUp .62s var(--ease) both', animationDelay: '.13s', whiteSpace: 'pre-line' }}>
+            {t('admin.heroTitle')}
           </h1>
           <p style={{ color: 'rgba(255,255,255,.5)', fontSize: '.92rem', lineHeight: 1.72, maxWidth: 520, animation: 'fadeUp .62s var(--ease) both', animationDelay: '.24s' }}>
-            Manage partner accounts, approve offers, run ISO 20022 payment settlements, and generate{' '}
-            <code style={{ background: 'rgba(255,255,255,.1)', padding: '.1rem .35rem', borderRadius: 4, fontSize: '.82em' }}>pain.001</code> bank files.
+            {t('admin.heroDesc')}
           </p>
 
           {/* Inline stats */}
           <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem', flexWrap: 'wrap', animation: 'fadeUp .62s var(--ease) both', animationDelay: '.34s' }}>
             {[
-              { label: 'Partners', value: partners.length, color: 'var(--gold)' },
-              { label: 'Pending offers', value: pendingOffers.length, color: 'var(--danger)' },
-              { label: 'Settlement batches', value: batches.length, color: 'var(--blue)' },
+              { labelKey: 'admin.stat.partners' as TranslationKey,      value: partners.length,      color: 'var(--gold)' },
+              { labelKey: 'admin.stat.pendingOffers' as TranslationKey, value: pendingOffers.length, color: 'var(--danger)' },
+              { labelKey: 'admin.stat.batches' as TranslationKey,       value: batches.length,       color: 'var(--blue)' },
             ].map(s => (
-              <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: '.7rem', background: 'rgba(255,255,255,.06)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', padding: '.62rem 1rem', borderRadius: 12, border: '1px solid rgba(255,255,255,.1)' }}>
+              <div key={s.labelKey} style={{ display: 'flex', alignItems: 'center', gap: '.7rem', background: 'rgba(255,255,255,.06)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', padding: '.62rem 1rem', borderRadius: 12, border: '1px solid rgba(255,255,255,.1)' }}>
                 <span style={{ fontSize: '1.3rem', fontWeight: 900, color: s.color, letterSpacing: '-.02em' }}>{s.value}</span>
-                <span style={{ fontSize: '.6rem', color: 'rgba(255,255,255,.48)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em' }}>{s.label}</span>
+                <span style={{ fontSize: '.6rem', color: 'rgba(255,255,255,.48)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em' }}>{t(s.labelKey)}</span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Mountain silhouette */}
         <svg viewBox="0 0 1440 80" preserveAspectRatio="none" style={{ position: 'absolute', bottom: -1, left: 0, width: '100%', zIndex: 3 }}>
           <path d="M0,80 L140,38 L240,62 L360,16 L480,50 L600,8 L720,42 L840,12 L960,46 L1080,20 L1200,52 L1320,28 L1440,44 L1440,80 Z" fill="#F2EFE8" />
         </svg>
@@ -352,8 +383,8 @@ export default function AdminPage() {
 
           <div style={{ background: '#fff', borderRadius: 'var(--r)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden', animation: 'rise .42s var(--ease) both', animationDelay: '.05s' }}>
             <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--line)', background: 'var(--night)' }}>
-              <div style={{ fontSize: '.55rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.14em', color: 'rgba(255,255,255,.35)', marginBottom: '.15rem' }}>Authentication</div>
-              <div style={{ fontSize: '.9rem', fontWeight: 700, color: '#fff' }}>Admin API Key</div>
+              <div style={{ fontSize: '.55rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.14em', color: 'rgba(255,255,255,.35)', marginBottom: '.15rem' }}>{t('admin.auth')}</div>
+              <div style={{ fontSize: '.9rem', fontWeight: 700, color: '#fff' }}>{t('admin.apiKey')}</div>
             </div>
             <div style={{ padding: '1.5rem' }}>
               <input
@@ -364,20 +395,19 @@ export default function AdminPage() {
                 style={{ width: '100%', padding: '.68rem .9rem', border: '1.5px solid var(--line)', borderRadius: 9, fontFamily: 'ui-monospace,monospace', fontSize: '.82rem', color: 'var(--text)', background: 'var(--sand)', outline: 'none', transition: 'border-color .18s' }}
               />
               <div style={{ fontSize: '.74rem', color: 'var(--sub)', marginTop: '.5rem' }}>
-                Default: <code style={{ background: 'var(--sand)', padding: '.1rem .3rem', borderRadius: 4, fontSize: '.9em' }}>admin-dev-key</code>
+                {t('admin.apiKeyDefault')} <code style={{ background: 'var(--sand)', padding: '.1rem .3rem', borderRadius: 4, fontSize: '.9em' }}>admin-dev-key</code>
               </div>
             </div>
           </div>
 
           <div style={{ background: '#fff', borderRadius: 'var(--r)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden', animation: 'rise .42s var(--ease) both', animationDelay: '.1s' }}>
             <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--line)', background: 'var(--night)' }}>
-              <div style={{ fontSize: '.55rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.14em', color: 'rgba(255,255,255,.35)', marginBottom: '.15rem' }}>Finance</div>
-              <div style={{ fontSize: '.9rem', fontWeight: 700, color: '#fff' }}>Settlement Actions</div>
+              <div style={{ fontSize: '.55rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.14em', color: 'rgba(255,255,255,.35)', marginBottom: '.15rem' }}>{t('admin.finance')}</div>
+              <div style={{ fontSize: '.9rem', fontWeight: 700, color: '#fff' }}>{t('admin.settlement')}</div>
             </div>
             <div style={{ padding: '1.5rem' }}>
               <p style={{ fontSize: '.85rem', color: 'var(--sub)', lineHeight: 1.65, marginBottom: '1.35rem' }}>
-                Aggregates all <strong style={{ color: 'var(--text)', fontWeight: 700 }}>pending</strong> merchant ledger entries into per-partner batches and generates a real ISO 20022{' '}
-                <code style={{ background: 'var(--sand)', padding: '.1rem .3rem', borderRadius: 4, fontSize: '.9em' }}>pain.001.001.09</code> XML file ready for your bank.
+                {t('admin.settlementDesc')}
               </p>
               <div style={{ display: 'flex', gap: '.75rem', flexWrap: 'wrap' }}>
                 <button
@@ -385,20 +415,20 @@ export default function AdminPage() {
                   onClick={runSettlement}
                   style={{ background: 'var(--navy)', color: '#fff', border: 'none', padding: '.72rem 1.5rem', borderRadius: 9, fontWeight: 700, fontSize: '.9rem', cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 16px rgba(27,50,89,.3)', transition: 'background .18s, transform .15s var(--ease)' }}
                 >
-                  Run Settlement
+                  {t('admin.runSettlement')}
                 </button>
                 <button
                   className="settle-reset"
                   onClick={reseed}
                   style={{ background: 'transparent', color: 'var(--sub)', border: '1.5px solid var(--line)', padding: '.72rem 1.25rem', borderRadius: 9, fontWeight: 600, fontSize: '.875rem', cursor: 'pointer', fontFamily: 'inherit', transition: 'border-color .18s, color .18s' }}
                 >
-                  Reset &amp; Reseed
+                  {t('admin.resetReseed')}
                 </button>
               </div>
               {settlementResult && (
                 <div style={{ marginTop: '1rem', padding: '.9rem 1.1rem', borderRadius: 9, fontSize: '.875rem', animation: 'rise .2s var(--ease)', ...(settlementResult.ok ? { background: '#e8f5ee', borderLeft: '4px solid var(--pine)', color: 'var(--pine)' } : { background: 'var(--sand)', color: 'var(--sub)' }) }}>
                   {settlementResult.ok
-                    ? <><strong style={{ display: 'block', fontWeight: 700, marginBottom: '.2rem' }}>Settlement successful</strong>{settlementResult.msg}</>
+                    ? <><strong style={{ display: 'block', fontWeight: 700, marginBottom: '.2rem' }}>{t('admin.settlementOk')}</strong>{settlementResult.msg}</>
                     : settlementResult.msg}
                 </div>
               )}
@@ -410,8 +440,8 @@ export default function AdminPage() {
         <section style={{ marginBottom: '2.5rem' }}>
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1.25rem', marginBottom: '1.5rem' }}>
             <div style={{ flexShrink: 0 }}>
-              <div style={{ fontSize: '.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.15em', color: 'var(--gold)', marginBottom: '.35rem' }}>Partner Management</div>
-              <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--night)', letterSpacing: '-.03em', lineHeight: 1 }}>Partners</h2>
+              <div style={{ fontSize: '.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.15em', color: 'var(--gold)', marginBottom: '.35rem' }}>{t('admin.partnerMgmt')}</div>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--night)', letterSpacing: '-.03em', lineHeight: 1 }}>{t('admin.partners')}</h2>
             </div>
             <div style={{ flex: 1, height: 1, background: 'var(--line)', marginBottom: '.65rem' }} />
             <button
@@ -420,7 +450,7 @@ export default function AdminPage() {
               onMouseEnter={e => { e.currentTarget.style.background = 'var(--blue)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
               onMouseLeave={e => { e.currentTarget.style.background = 'var(--navy)'; e.currentTarget.style.transform = 'translateY(0)'; }}
             >
-              + Add Partner
+              {t('admin.addPartner')}
             </button>
           </div>
 
@@ -429,14 +459,14 @@ export default function AdminPage() {
               <table className="admin-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '.82rem', minWidth: 620 }}>
                 <thead>
                   <tr>
-                    {['Name', 'Username', 'Password', 'Category', 'Flask API Key', 'Status', 'Actions'].map(h => (
-                      <th key={h} style={thStyle}>{h}</th>
+                    {([ 'admin.col.name', 'admin.col.username', 'admin.col.password', 'admin.col.category', 'admin.col.apiKey', 'admin.col.status', 'admin.col.actions' ] as TranslationKey[]).map(k => (
+                      <th key={k} style={thStyle}>{t(k)}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {partners.length === 0 ? (
-                    <tr><td colSpan={7} className="empty-msg">No partners yet</td></tr>
+                    <tr><td colSpan={7} className="empty-msg">{t('admin.noPartners')}</td></tr>
                   ) : partners.map(p => {
                     const pwVisible = visiblePasswords.has(p.id);
                     return (
@@ -450,7 +480,6 @@ export default function AdminPage() {
                             </span>
                             <button
                               onClick={() => togglePasswordVisibility(p.id)}
-                              title={pwVisible ? 'Hide' : 'Show'}
                               style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '.1rem .25rem', color: 'var(--sub)', lineHeight: 1 }}
                             >
                               {pwVisible ? (
@@ -461,7 +490,7 @@ export default function AdminPage() {
                             </button>
                           </div>
                         </td>
-                        <td style={{ padding: '.78rem .9rem' }}>{CATEGORY_LABELS[p.category] || p.category}</td>
+                        <td style={{ padding: '.78rem .9rem' }}>{getCategoryLabel(p.category)}</td>
                         <td style={{ padding: '.78rem .9rem' }}>
                           <code style={{ fontSize: '.72rem', color: 'var(--sub)', background: 'var(--sand)', padding: '.15rem .4rem', borderRadius: 4 }}>{p.flaskApiKey}</code>
                         </td>
@@ -472,7 +501,7 @@ export default function AdminPage() {
                             className="action-btn danger-btn"
                             style={{ background: 'transparent', color: 'var(--danger)', border: '1px solid rgba(197,32,46,.28)', padding: '.3rem .72rem', borderRadius: 6, fontSize: '.72rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
                           >
-                            Remove
+                            {t('admin.removePartner')}
                           </button>
                         </td>
                       </tr>
@@ -488,9 +517,9 @@ export default function AdminPage() {
         <section style={{ marginBottom: '2.5rem' }}>
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1.25rem', marginBottom: '1.5rem' }}>
             <div style={{ flexShrink: 0 }}>
-              <div style={{ fontSize: '.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.15em', color: 'var(--danger)', marginBottom: '.35rem' }}>Content Moderation</div>
+              <div style={{ fontSize: '.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.15em', color: 'var(--danger)', marginBottom: '.35rem' }}>{t('admin.contentMod')}</div>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--night)', letterSpacing: '-.03em', lineHeight: 1 }}>
-                Pending Offers
+                {t('admin.pendingOffers')}
                 {pendingOffers.length > 0 && (
                   <span style={{ marginLeft: '.6rem', background: 'var(--danger)', color: '#fff', borderRadius: 20, padding: '.1rem .55rem', fontSize: '.62rem', fontWeight: 800, verticalAlign: 'middle' }}>
                     {pendingOffers.length}
@@ -503,7 +532,7 @@ export default function AdminPage() {
               onClick={loadPendingOffers}
               style={{ background: 'transparent', border: '1px solid var(--line)', color: 'var(--sub)', padding: '.38rem .75rem', borderRadius: 7, fontSize: '.72rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', marginBottom: '.65rem', flexShrink: 0 }}
             >
-              Refresh
+              {t('common.refresh')}
             </button>
           </div>
 
@@ -512,14 +541,14 @@ export default function AdminPage() {
               <table className="admin-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '.82rem', minWidth: 600 }}>
                 <thead>
                   <tr>
-                    {['Partner', 'Title', 'Type', 'Payout', 'Submitted', 'Actions'].map(h => (
-                      <th key={h} style={thStyle}>{h}</th>
+                    {(['admin.col.partner','admin.col.title','admin.col.type','admin.col.payout','admin.col.submitted','admin.col.actions'] as TranslationKey[]).map(k => (
+                      <th key={k} style={thStyle}>{t(k)}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {pendingOffers.length === 0 ? (
-                    <tr><td colSpan={6} className="empty-msg">No offers pending approval</td></tr>
+                    <tr><td colSpan={6} className="empty-msg">{t('admin.noPendingOffers')}</td></tr>
                   ) : pendingOffers.map(o => (
                     <tr key={o.id} style={{ borderBottom: '1px solid var(--line)' }}>
                       <td style={{ padding: '.78rem .9rem', fontWeight: 700, color: 'var(--night)' }}>{o.partner_name}</td>
@@ -529,7 +558,7 @@ export default function AdminPage() {
                       </td>
                       <td style={{ padding: '.78rem .9rem' }}><span className="pill pill-draft">{o.type}</span></td>
                       <td style={{ padding: '.78rem .9rem', fontWeight: 700, color: 'var(--navy)' }}>CHF {(o.partner_payout_rappen / 100).toFixed(2)}</td>
-                      <td style={{ padding: '.78rem .9rem', fontSize: '.75rem', color: 'var(--sub)' }}>{new Date(o.created_at).toLocaleString('en-CH', { dateStyle: 'short', timeStyle: 'short' })}</td>
+                      <td style={{ padding: '.78rem .9rem', fontSize: '.75rem', color: 'var(--sub)' }}>{new Date(o.created_at).toLocaleString('de-CH', { dateStyle: 'short', timeStyle: 'short' })}</td>
                       <td style={{ padding: '.78rem .9rem' }}>
                         <div style={{ display: 'flex', gap: '.4rem' }}>
                           <button
@@ -537,14 +566,14 @@ export default function AdminPage() {
                             className="action-btn approve-btn"
                             style={{ background: 'var(--pine)', color: '#fff', border: 'none', padding: '.3rem .78rem', borderRadius: 6, fontSize: '.72rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
                           >
-                            Approve
+                            {t('admin.approve')}
                           </button>
                           <button
                             onClick={() => rejectOffer(o.id, o.title)}
                             className="action-btn danger-btn"
                             style={{ background: 'transparent', color: 'var(--danger)', border: '1px solid rgba(197,32,46,.28)', padding: '.3rem .78rem', borderRadius: 6, fontSize: '.72rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
                           >
-                            Reject
+                            {t('admin.reject')}
                           </button>
                         </div>
                       </td>
@@ -556,19 +585,99 @@ export default function AdminPage() {
           </div>
         </section>
 
+        {/* ── Activity Popularity ── */}
+        <section style={{ marginBottom: '2.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1.25rem', marginBottom: '1.5rem' }}>
+            <div style={{ flexShrink: 0 }}>
+              <div style={{ fontSize: '.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.15em', color: 'var(--pine)', marginBottom: '.35rem' }}>{t('admin.guestInsights')}</div>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--night)', letterSpacing: '-.03em', lineHeight: 1 }}>{t('admin.activityPopularity')}</h2>
+            </div>
+            <div style={{ flex: 1, height: 1, background: 'var(--line)', marginBottom: '.65rem' }} />
+            <button
+              onClick={loadActivityStats}
+              style={{ background: 'transparent', border: '1px solid var(--line)', color: 'var(--sub)', padding: '.38rem .75rem', borderRadius: 7, fontSize: '.72rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', marginBottom: '.65rem', flexShrink: 0 }}
+            >
+              {t('common.refresh')}
+            </button>
+          </div>
+
+          <div className="activity-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', alignItems: 'start' }}>
+            {/* Bar chart */}
+            <div style={{ background: '#fff', borderRadius: 'var(--r)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden', animation: 'rise .45s var(--ease) both', animationDelay: '.08s' }}>
+              <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--line)', background: 'var(--sand)' }}>
+                <div style={{ fontSize: '.6rem', fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '.12em', color: 'var(--sub)' }}>{t('admin.rankedByViews')}</div>
+              </div>
+              <div style={{ padding: '1.5rem' }}>
+                {activityStats.length === 0 ? (
+                  <div className="empty-msg">{t('admin.noActivityViews')}</div>
+                ) : (() => {
+                  const max = activityStats[0].views;
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      {activityStats.map((s, i) => {
+                        const pct = Math.round((s.views / max) * 100);
+                        const color = CAT_COLORS[s.category] || 'var(--navy)';
+                        const icon = CAT_ICONS[s.category] || '📍';
+                        const catLabel = t(('guest.cat.' + s.category) as TranslationKey) || s.category;
+                        const lastSeen = new Date(s.last_viewed).toLocaleString('de-CH', { dateStyle: 'short', timeStyle: 'short' });
+                        return (
+                          <div key={s.activity_id} style={{ animation: `rise .35s var(--ease) ${i * .04}s both` }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.4rem' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', minWidth: 0, flex: 1 }}>
+                                <span style={{ fontSize: '.95rem', flexShrink: 0 }}>{icon}</span>
+                                <span style={{ fontSize: '.82rem', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.activity_title}</span>
+                                <span style={{ flexShrink: 0, background: color + '1a', color, padding: '.1rem .45rem', borderRadius: 20, fontSize: '.6rem', fontWeight: 700 }}>{catLabel}</span>
+                              </div>
+                              <div style={{ flexShrink: 0, marginLeft: '1rem', textAlign: 'right' }}>
+                                <div style={{ fontWeight: 800, fontSize: '.85rem', color: 'var(--text)' }}>{s.views} {s.views === 1 ? t('common.view') : t('common.views')}</div>
+                                <div style={{ fontSize: '.62rem', color: 'var(--sub)', marginTop: '.05rem' }}>{t('common.last')}: {lastSeen}</div>
+                              </div>
+                            </div>
+                            <div style={{ height: 9, background: 'var(--sand)', borderRadius: 99, overflow: 'hidden' }}>
+                              <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 99, transition: 'width .7s var(--ease)' }} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+
+            {/* Bubble map */}
+            <div style={{ background: '#fff', borderRadius: 'var(--r)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden', animation: 'rise .45s var(--ease) both', animationDelay: '.14s' }}>
+              <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--line)', background: 'var(--sand)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ fontSize: '.6rem', fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '.12em', color: 'var(--sub)' }}>{t('admin.bubbleSize')}</div>
+                <div style={{ display: 'flex', gap: '.6rem', flexWrap: 'wrap' }}>
+                  {BUBBLE_LEGEND.map(([cat, color, icon]) => (
+                    <span key={cat} style={{ display: 'flex', alignItems: 'center', gap: '.25rem', fontSize: '.6rem', color: 'var(--sub)', fontWeight: 600 }}>
+                      <span style={{ width: 10, height: 10, borderRadius: '50%', background: color as string, display: 'inline-block', flexShrink: 0 }} />
+                      {icon} {t(('guest.cat.' + cat) as TranslationKey)}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div style={{ height: 420 }}>
+                <AdminActivityMap stats={activityStats} />
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* ── Settlement Batches ── */}
         <section style={{ marginBottom: '2.5rem' }}>
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1.25rem', marginBottom: '1.5rem' }}>
             <div style={{ flexShrink: 0 }}>
-              <div style={{ fontSize: '.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.15em', color: 'var(--blue)', marginBottom: '.35rem' }}>ISO 20022</div>
-              <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--night)', letterSpacing: '-.03em', lineHeight: 1 }}>Settlement Batches</h2>
+              <div style={{ fontSize: '.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.15em', color: 'var(--blue)', marginBottom: '.35rem' }}>{t('admin.iso20022')}</div>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--night)', letterSpacing: '-.03em', lineHeight: 1 }}>{t('admin.batches')}</h2>
             </div>
             <div style={{ flex: 1, height: 1, background: 'var(--line)', marginBottom: '.65rem' }} />
             <button
               onClick={loadBatches}
               style={{ background: 'transparent', border: '1px solid var(--line)', color: 'var(--sub)', padding: '.38rem .75rem', borderRadius: 7, fontSize: '.72rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', marginBottom: '.65rem', flexShrink: 0 }}
             >
-              Refresh
+              {t('common.refresh')}
             </button>
           </div>
 
@@ -577,17 +686,17 @@ export default function AdminPage() {
               <table className="admin-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '.82rem', minWidth: 700 }}>
                 <thead>
                   <tr>
-                    {['Partner', 'Period', 'Total', 'Count', 'Reference', 'Status', 'Actions'].map(h => (
-                      <th key={h} style={thStyle}>{h}</th>
+                    {(['admin.col.partner','admin.col.period','admin.col.total','admin.col.count','admin.col.reference','admin.col.status','admin.col.actions'] as TranslationKey[]).map(k => (
+                      <th key={k} style={thStyle}>{t(k)}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {batches.length === 0 ? (
-                    <tr><td colSpan={7} className="empty-msg">No batches yet — run a settlement first</td></tr>
+                    <tr><td colSpan={7} className="empty-msg">{t('admin.noBatches')}</td></tr>
                   ) : batches.map(b => {
                     const chf = (b.total_rappen / 100).toFixed(2);
-                    const date = new Date(b.created_at).toLocaleString('en-CH', { dateStyle: 'short', timeStyle: 'short' });
+                    const date = new Date(b.created_at).toLocaleString('de-CH', { dateStyle: 'short', timeStyle: 'short' });
                     const canConfirm = b.status === 'submitted' || b.status === 'draft';
                     return (
                       <tr key={b.id} style={{ borderBottom: '1px solid var(--line)' }}>
@@ -612,7 +721,7 @@ export default function AdminPage() {
                                 onClick={() => viewPain001(b.id, esc(b.payment_reference))}
                                 style={{ background: 'transparent', color: 'var(--blue)', border: '1px solid rgba(45,83,150,.28)', padding: '.3rem .7rem', borderRadius: 6, fontSize: '.72rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
                               >
-                                View XML
+                                {t('admin.viewXml')}
                               </button>
                             )}
                             {canConfirm && (
@@ -621,7 +730,7 @@ export default function AdminPage() {
                                 onClick={() => confirmBatch(b.id)}
                                 style={{ background: 'var(--pine)', color: '#fff', border: 'none', padding: '.3rem .7rem', borderRadius: 6, fontSize: '.72rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
                               >
-                                Mark paid
+                                {t('admin.markPaid')}
                               </button>
                             )}
                           </div>
@@ -639,8 +748,8 @@ export default function AdminPage() {
         <section>
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1.25rem', marginBottom: '1.5rem' }}>
             <div style={{ flexShrink: 0 }}>
-              <div style={{ fontSize: '.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.15em', color: 'var(--pine)', marginBottom: '.35rem' }}>Payment File</div>
-              <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--night)', letterSpacing: '-.03em', lineHeight: 1 }}>pain.001 Preview</h2>
+              <div style={{ fontSize: '.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.15em', color: 'var(--pine)', marginBottom: '.35rem' }}>{t('admin.paymentFile')}</div>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--night)', letterSpacing: '-.03em', lineHeight: 1 }}>{t('admin.pain001')}</h2>
             </div>
             <div style={{ flex: 1, height: 1, background: 'var(--line)', marginBottom: '.65rem' }} />
             <span style={{ background: 'rgba(45,83,150,.1)', color: 'var(--blue)', padding: '.22rem .65rem', borderRadius: 5, fontSize: '.62rem', fontWeight: 700, marginBottom: '.65rem', flexShrink: 0 }}>ISO 20022 · pain.001.001.09</span>
@@ -648,23 +757,23 @@ export default function AdminPage() {
 
           <div style={{ background: '#fff', borderRadius: 'var(--r)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden', animation: 'rise .45s var(--ease) both', animationDelay: '.2s' }}>
             <div style={{ padding: '.72rem 1.5rem', background: 'var(--sand)', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: '.5rem' }}>
-              <span style={{ fontFamily: 'ui-monospace,monospace', fontSize: '.75rem', color: 'var(--sub)' }}>{xmlFileName}</span>
+              <span style={{ fontFamily: 'ui-monospace,monospace', fontSize: '.75rem', color: 'var(--sub)' }}>{xmlFileName || '—'}</span>
             </div>
             <div style={{ background: '#0d1117', borderRadius: '0 0 var(--r) var(--r)', overflow: 'hidden' }}>
               {xmlContent
                 ? <pre style={{ color: '#a6e3a1', padding: '1.35rem 1.5rem', fontSize: '.72rem', maxHeight: 440, overflow: 'auto', fontFamily: 'ui-monospace,"Cascadia Code",monospace', lineHeight: 1.7, margin: 0 }}>{xmlContent}</pre>
-                : <div style={{ padding: '2.5rem 1.5rem', textAlign: 'center', color: 'rgba(255,255,255,.25)', fontSize: '.8rem', fontFamily: 'ui-monospace,monospace' }}>Click &quot;View XML&quot; on a batch row to load the payment file here.</div>
+                : <div style={{ padding: '2.5rem 1.5rem', textAlign: 'center', color: 'rgba(255,255,255,.25)', fontSize: '.8rem', fontFamily: 'ui-monospace,monospace' }}>{t('admin.pain001Hint')}</div>
               }
             </div>
             <div style={{ padding: '.85rem 1.5rem', fontSize: '.75rem', color: 'var(--sub)', borderTop: '1px solid var(--line)', lineHeight: 1.6 }}>
-              This file is uploaded to the bank&apos;s e-banking portal. ISO 20022 pain.001 is accepted by all Swiss banks — PostFinance, UBS, Raiffeisen, ZKB, and others.
+              {t('admin.pain001Footer')}
             </div>
           </div>
         </section>
 
       </main>
 
-      {/* ── Add Partner Modal (dark glass) ── */}
+      {/* ── Add Partner Modal ── */}
       {showAddPartner && (
         <div
           onClick={() => setShowAddPartner(false)}
@@ -676,8 +785,8 @@ export default function AdminPage() {
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.75rem' }}>
               <div>
-                <div style={{ fontSize: '.55rem', fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '.14em', color: 'rgba(255,255,255,.35)', marginBottom: '.2rem' }}>Partner Management</div>
-                <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff' }}>Add New Partner</h2>
+                <div style={{ fontSize: '.55rem', fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '.14em', color: 'rgba(255,255,255,.35)', marginBottom: '.2rem' }}>{t('admin.partnerMgmt')}</div>
+                <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff' }}>{t('admin.addPartnerTitle')}</h2>
               </div>
               <button
                 onClick={() => setShowAddPartner(false)}
@@ -690,29 +799,29 @@ export default function AdminPage() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '.9rem' }}>
               <div>
-                <label style={darkLabel}>Partner Name</label>
+                <label style={darkLabel}>{t('admin.partnerName')}</label>
                 <input
                   style={darkInput} value={addName} onChange={e => setAddName(e.target.value)}
-                  placeholder="e.g. Grindelwald Ski School"
+                  placeholder={t('admin.partnerNamePh')}
                   onFocus={e => (e.target.style.borderColor = 'var(--gold)')}
                   onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,.12)')}
                 />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.65rem' }}>
                 <div>
-                  <label style={darkLabel}>Username</label>
+                  <label style={darkLabel}>{t('admin.col.username')}</label>
                   <input
                     style={darkInput} value={addUsername} onChange={e => setAddUsername(e.target.value)}
-                    placeholder="e.g. grindelski"
+                    placeholder={t('admin.usernamePh')}
                     onFocus={e => (e.target.style.borderColor = 'var(--gold)')}
                     onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,.12)')}
                   />
                 </div>
                 <div>
-                  <label style={darkLabel}>Password</label>
+                  <label style={darkLabel}>{t('admin.col.password')}</label>
                   <input
                     type="password" style={darkInput} value={addPassword} onChange={e => setAddPassword(e.target.value)}
-                    placeholder="Min. 6 characters"
+                    placeholder={t('admin.passwordMin')}
                     onFocus={e => (e.target.style.borderColor = 'var(--gold)')}
                     onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,.12)')}
                   />
@@ -720,22 +829,22 @@ export default function AdminPage() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.65rem' }}>
                 <div>
-                  <label style={darkLabel}>Category</label>
+                  <label style={darkLabel}>{t('admin.category')}</label>
                   <select
                     style={{ ...darkInput, cursor: 'pointer' }}
                     value={addCategory} onChange={e => setAddCategory(e.target.value)}
                   >
-                    <option value="mountain_railway" style={{ background: 'var(--night)' }}>Mountain Railway</option>
-                    <option value="activity" style={{ background: 'var(--night)' }}>Activity</option>
-                    <option value="transport" style={{ background: 'var(--night)' }}>Transport</option>
-                    <option value="cruise" style={{ background: 'var(--night)' }}>Cruise</option>
+                    <option value="mountain_railway" style={{ background: 'var(--night)' }}>{t('admin.cat.mountain')}</option>
+                    <option value="activity" style={{ background: 'var(--night)' }}>{t('admin.cat.activity')}</option>
+                    <option value="transport" style={{ background: 'var(--night)' }}>{t('admin.cat.transport')}</option>
+                    <option value="cruise" style={{ background: 'var(--night)' }}>{t('admin.cat.cruise')}</option>
                   </select>
                 </div>
                 <div>
-                  <label style={darkLabel}>Flask API Key</label>
+                  <label style={darkLabel}>{t('admin.flaskKey')}</label>
                   <input
                     style={darkInput} value={addFlaskKey} onChange={e => setAddFlaskKey(e.target.value)}
-                    placeholder="key-grindelski (auto)"
+                    placeholder={t('admin.flaskKeyPh')}
                     onFocus={e => (e.target.style.borderColor = 'var(--gold)')}
                     onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,.12)')}
                   />
@@ -754,14 +863,14 @@ export default function AdminPage() {
                   className="modal-cancel"
                   style={{ background: 'rgba(255,255,255,.06)', color: 'rgba(255,255,255,.62)', border: '1px solid rgba(255,255,255,.12)', padding: '.68rem 1.25rem', borderRadius: 9, fontWeight: 600, fontSize: '.875rem', cursor: 'pointer', fontFamily: 'inherit', transition: 'background .15s' }}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   onClick={handleAddPartner}
                   className="modal-confirm"
                   style={{ background: 'var(--gold)', color: '#fff', border: 'none', padding: '.68rem 1.6rem', borderRadius: 9, fontWeight: 700, fontSize: '.875rem', cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 16px rgba(196,149,14,.4)', transition: 'background .18s, transform .15s var(--ease)' }}
                 >
-                  Add Partner
+                  {t('admin.addPartnerBtn')}
                 </button>
               </div>
             </div>
