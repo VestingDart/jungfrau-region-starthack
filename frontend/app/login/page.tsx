@@ -17,9 +17,11 @@ const QUICK_LOGINS: Record<Tab, { label: string; sub: string; username: string; 
     { label: 'Lucas Weber',    sub: 'Booking JFR-2026-A0002', username: 'lucas_berlin', password: 'welcome4' },
   ],
   partner: [
-    { label: 'Harder Kulm Mountain Railway', sub: 'Mountain railway · key-jungfraubahnen', username: 'harderkulm', password: 'partner123' },
-    { label: 'Lake Thun Cruise',             sub: 'Cruise · key-outdoor',                  username: 'thuncruise',  password: 'partner456' },
-    { label: 'BOB Railway',                  sub: 'Transport · key-skirental',              username: 'bobrailway',  password: 'partner789' },
+    { label: 'Jungfraubahnen',               sub: 'Mountain railway · key-jungfraubahnen', username: 'jungfraubahnen',  password: 'partner123' },
+    { label: 'Outdoor Interlaken',           sub: 'Outdoor · key-outdoor',                 username: 'outdoor',         password: 'partner456' },
+    { label: 'Wengen Ski Rental',            sub: 'Ski rental · key-skirental',            username: 'wengenskirental', password: 'partner789' },
+    { label: 'Bäckerei Müller Grindelwald',  sub: 'Food & bakery · key-baeckerei',         username: 'baeckerei',       password: 'partner321' },
+    { label: 'Restaurant Bergblick Mürren',  sub: 'Restaurant · key-bergblick',            username: 'bergblick',       password: 'partner654' },
   ],
   admin: [
     { label: 'Administrator', sub: 'Full settlement access', username: 'admin', password: 'admin123' },
@@ -195,7 +197,7 @@ export default function LoginPage() {
                     <label style={labelStyle}>{t('login.username')}</label>
                     <input
                       type="text" value={username} onChange={e => setUsername(e.target.value)} required
-                      placeholder={tab === 'admin' ? 'admin' : tab === 'partner' ? 'e.g. harderkulm' : 'e.g. anna_tokyo'}
+                      placeholder={tab === 'admin' ? 'admin' : tab === 'partner' ? 'e.g. jungfraubahnen' : 'e.g. anna_tokyo'}
                       style={inputStyle}
                       onFocus={e => (e.target.style.borderColor = 'var(--gold)')}
                       onBlur={e => (e.target.style.borderColor = 'var(--line)')}
