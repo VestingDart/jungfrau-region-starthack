@@ -3,6 +3,8 @@
 import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { ACTIVITIES, CATEGORY_COLORS } from '@/lib/activities';
+import type { Activity } from '@/lib/activities';
+import { useLanguage } from '@/lib/language';
 
 interface ActivityStat {
   activity_id: string;
@@ -13,9 +15,11 @@ interface ActivityStat {
 
 interface Props {
   stats: ActivityStat[];
+  activities?: Activity[];
 }
 
-export default function AdminActivityMap({ stats }: Props) {
+export default function AdminActivityMap({ stats, activities = ACTIVITIES }: Props) {
+  const { t } = useLanguage();
   const maxViews = stats.reduce((m, s) => Math.max(m, s.views), 1);
   const statMap = Object.fromEntries(stats.map(s => [s.activity_id, s]));
 
@@ -31,7 +35,7 @@ export default function AdminActivityMap({ stats }: Props) {
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      {ACTIVITIES.map(a => {
+      {activities.map(a => {
         const stat = statMap[a.id];
         const views = stat?.views ?? 0;
         const radius = views > 0 ? 6 + (views / maxViews) * 14 : 4;
@@ -54,7 +58,9 @@ export default function AdminActivityMap({ stats }: Props) {
               <div style={{ fontFamily: '-apple-system,sans-serif', minWidth: 120 }}>
                 <div style={{ fontWeight: 700, fontSize: '.82rem' }}>{a.title}</div>
                 <div style={{ fontSize: '.72rem', color: '#64748B', marginTop: '.15rem' }}>
-                  {views > 0 ? `${views} ${views === 1 ? 'view' : 'views'}` : 'No views yet'}
+                  {views > 0
+                    ? `${views} ${views === 1 ? t('common.view') : t('common.views')}`
+                    : t('admin.noActivityViews').split(' —')[0]}
                 </div>
               </div>
             </Tooltip>

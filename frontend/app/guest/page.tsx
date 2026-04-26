@@ -7,6 +7,8 @@ import { getSession, clearSession } from '@/lib/auth';
 import type { Session } from '@/lib/auth';
 import { ACTIVITIES } from '@/lib/activities';
 import { useLanguage } from '@/lib/language';
+import { getStoredSeason, storeSeason } from '@/lib/season';
+import type { Season } from '@/lib/season';
 import LangToggle from '@/components/LangToggle';
 
 const ActivityMap = dynamic(() => import('@/components/ActivityMap'), { ssr: false, loading: () => <div style={{ height: '100%', background: 'var(--sand)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--sub)', fontSize: '.875rem' }}>Loading map…</div> });
@@ -44,6 +46,7 @@ export default function GuestPage() {
   const [qrOpen, setQrOpen] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState<string | null>(null);
   const [activityFilter, setActivityFilter] = useState<string>('all');
+  const [season, setSeason] = useState<Season>('summer');
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tickerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -109,6 +112,7 @@ export default function GuestPage() {
   function copyToken() { navigator.clipboard.writeText(qrToken).then(() => showToast(t('guest.tokenCopied'))); }
 
   useEffect(() => {
+    setSeason(getStoredSeason());
     const s = getSession('guest');
     if (!s) { router.replace('/login'); return; }
     setSession(s);
@@ -154,6 +158,13 @@ export default function GuestPage() {
         .stat-chip:hover { transform: translateY(-3px); box-shadow: 0 10px 32px rgba(14,28,46,.13) !important; }
         .topup-preset { transition: background .15s, border-color .15s, color .15s; }
         .topup-preset:hover { border-color: var(--gold) !important; }
+        .guest-card-wrap {
+          transition: transform .3s var(--ease), filter .3s var(--ease);
+        }
+        .guest-card-wrap:hover {
+          transform: translateY(-5px) scale(1.02);
+          filter: drop-shadow(0 18px 32px rgba(14,28,46,.38));
+        }
       `}</style>
 
       {/* Navbar */}
@@ -336,58 +347,91 @@ export default function GuestPage() {
 
         {/* Activities & Map */}
         <section style={{ marginBottom: '3.5rem' }}>
-          <div style={{ marginBottom: '1.75rem' }}>
-            <div style={{ fontSize: '.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.15em', color: 'var(--pine)', marginBottom: '.35rem' }}>Jungfrau Region</div>
-            <h2 style={{ fontSize: '1.55rem', fontWeight: 900, color: 'var(--night)', letterSpacing: '-.03em', lineHeight: 1 }}>{t('guest.activities')}</h2>
-            <p style={{ fontSize: '.875rem', color: 'var(--sub)', marginTop: '.35rem', lineHeight: 1.6 }}>{t('guest.activitiesDesc')}</p>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.75rem' }}>
+            <div>
+              <div style={{ fontSize: '.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.15em', color: 'var(--pine)', marginBottom: '.35rem' }}>Jungfrau Region</div>
+              <h2 style={{ fontSize: '1.55rem', fontWeight: 900, color: 'var(--night)', letterSpacing: '-.03em', lineHeight: 1 }}>{t('guest.activities')}</h2>
+              <p style={{ fontSize: '.875rem', color: 'var(--sub)', marginTop: '.35rem', lineHeight: 1.6 }}>{t('guest.activitiesDesc')}</p>
+            </div>
+            {/* Season toggle */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '.35rem', flexShrink: 0 }}>
+              <span style={{ fontSize: '.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--sub)' }}>{t('guest.season.label')}</span>
+              <div style={{ display: 'flex', background: 'var(--sand)', borderRadius: 22, padding: 3, gap: 0 }}>
+                {(['summer', 'winter'] as Season[]).map(s => {
+                  const active = season === s;
+                  const icon = s === 'summer' ? '☀️' : '❄️';
+                  const label = t(s === 'summer' ? 'guest.season.summer' : 'guest.season.winter');
+                  return (
+                    <button
+                      key={s}
+                      onClick={() => { setSeason(s); storeSeason(s); setActivityFilter('all'); setSelectedActivity(null); }}
+                      style={{ padding: '.38rem .9rem', borderRadius: 20, border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: '.8rem', fontWeight: 700, transition: 'all .2s', background: active ? (s === 'summer' ? '#C4950E' : '#2D5396') : 'transparent', color: active ? '#fff' : 'var(--sub)', boxShadow: active ? '0 2px 10px rgba(0,0,0,.15)' : 'none' }}
+                    >
+                      {icon} {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
-          <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
-            {(['all', 'hiking', 'skiing', 'sightseeing', 'adventure'] as const).map(f => {
-              const colors: Record<string, string> = { all: 'var(--navy)', hiking: '#3D7252', skiing: '#2D5396', sightseeing: '#C4950E', adventure: '#C5202E' };
-              const active = activityFilter === f;
-              const labels: Record<string, string> = { all: t('guest.filterAll'), hiking: `🥾 ${t('guest.cat.hiking')}`, skiing: `⛷️ ${t('guest.cat.skiing')}`, sightseeing: `🔭 ${t('guest.cat.sightseeing')}`, adventure: `🧗 ${t('guest.cat.adventure')}` };
-              return (
-                <button key={f} onClick={() => setActivityFilter(f)} style={{ padding: '.35rem .85rem', borderRadius: 20, border: `1.5px solid ${active ? colors[f] : 'var(--line)'}`, background: active ? colors[f] : '#fff', color: active ? '#fff' : 'var(--sub)', fontSize: '.75rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'all .18s' }}>
-                  {labels[f]}
-                </button>
-              );
-            })}
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: '1.25rem', alignItems: 'start' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '.65rem', maxHeight: 520, overflowY: 'auto', paddingRight: '.25rem' }}>
-              {ACTIVITIES.filter(a => activityFilter === 'all' || a.category === activityFilter).map(a => {
-                const catColors: Record<string, string> = { hiking: '#3D7252', skiing: '#2D5396', sightseeing: '#C4950E', adventure: '#C5202E' };
-                const catIcons: Record<string, string> = { hiking: '🥾', skiing: '⛷️', sightseeing: '🔭', adventure: '🧗' };
-                const catLabels: Record<string, string> = { hiking: t('guest.cat.hiking'), skiing: t('guest.cat.skiing'), sightseeing: t('guest.cat.sightseeing'), adventure: t('guest.cat.adventure') };
-                const diffLabels: Record<string, string> = { easy: t('guest.diff.easy'), medium: t('guest.diff.medium'), hard: t('guest.diff.hard') };
-                const isSelected = selectedActivity === a.id;
-                return (
-                  <div key={a.id}
-                    onClick={() => { setSelectedActivity(isSelected ? null : a.id); if (!isSelected) fetch('/api/activities/view', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ activity_id: a.id, activity_title: a.title, category: a.category }) }).catch(() => {}); }}
-                    style={{ background: isSelected ? 'var(--night)' : '#fff', borderRadius: 12, padding: '1rem 1.1rem', border: `1.5px solid ${isSelected ? 'var(--night)' : 'var(--line)'}`, cursor: 'pointer', transition: 'all .22s var(--ease)', boxShadow: isSelected ? '0 8px 32px rgba(14,28,46,.22)' : 'var(--shadow-sm)' }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '.75rem' }}>
-                      <div style={{ width: 38, height: 38, borderRadius: 10, background: isSelected ? 'rgba(255,255,255,.12)' : catColors[a.category] + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', flexShrink: 0 }}>
-                        {catIcons[a.category]}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontWeight: 700, fontSize: '.88rem', color: isSelected ? '#fff' : 'var(--text)', marginBottom: '.2rem', lineHeight: 1.3 }}>{a.title}</div>
-                        <div style={{ fontSize: '.75rem', color: isSelected ? 'rgba(255,255,255,.55)' : 'var(--sub)', lineHeight: 1.5, marginBottom: '.5rem' }}>{a.description}</div>
-                        <div style={{ display: 'flex', gap: '.35rem', flexWrap: 'wrap' }}>
-                          <span style={{ background: catColors[a.category], color: '#fff', padding: '.12rem .45rem', borderRadius: 20, fontSize: '.62rem', fontWeight: 700 }}>{catLabels[a.category]}</span>
-                          {a.difficulty && <span style={{ background: isSelected ? 'rgba(255,255,255,.12)' : 'var(--sand)', color: isSelected ? 'rgba(255,255,255,.65)' : 'var(--sub)', padding: '.12rem .45rem', borderRadius: 20, fontSize: '.62rem', fontWeight: 600 }}>{diffLabels[a.difficulty]}</span>}
-                          <span style={{ background: isSelected ? 'rgba(255,255,255,.12)' : 'var(--sand)', color: isSelected ? 'rgba(255,255,255,.65)' : 'var(--sub)', padding: '.12rem .45rem', borderRadius: 20, fontSize: '.62rem', fontWeight: 600 }}>⏱ {a.duration}</span>
+
+          {/* Category filter pills */}
+          {(() => {
+            const seasonActivities = ACTIVITIES.filter(a => a.season === season || a.season === 'both');
+            const availableCats = [...new Set(seasonActivities.map(a => a.category))];
+            const catColors: Record<string, string> = { all: 'var(--navy)', hiking: '#3D7252', skiing: '#2D5396', sightseeing: '#C4950E', adventure: '#C5202E' };
+            const catLabels: Record<string, string> = { hiking: `🥾 ${t('guest.cat.hiking')}`, skiing: `⛷️ ${t('guest.cat.skiing')}`, sightseeing: `🔭 ${t('guest.cat.sightseeing')}`, adventure: `🧗 ${t('guest.cat.adventure')}` };
+            const filteredActivities = seasonActivities.filter(a => activityFilter === 'all' || a.category === activityFilter);
+            return (
+              <>
+                <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+                  {(['all', ...availableCats] as string[]).map(f => {
+                    const active = activityFilter === f;
+                    return (
+                      <button key={f} onClick={() => setActivityFilter(f)} style={{ padding: '.35rem .85rem', borderRadius: 20, border: `1.5px solid ${active ? catColors[f] : 'var(--line)'}`, background: active ? catColors[f] : '#fff', color: active ? '#fff' : 'var(--sub)', fontSize: '.75rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'all .18s' }}>
+                        {f === 'all' ? t('guest.filterAll') : catLabels[f]}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: '1.25rem', alignItems: 'start' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '.65rem', maxHeight: 520, overflowY: 'auto', paddingRight: '.25rem' }}>
+                    {filteredActivities.map(a => {
+                      const aC: Record<string, string> = { hiking: '#3D7252', skiing: '#2D5396', sightseeing: '#C4950E', adventure: '#C5202E' };
+                      const aI: Record<string, string> = { hiking: '🥾', skiing: '⛷️', sightseeing: '🔭', adventure: '🧗' };
+                      const aL: Record<string, string> = { hiking: t('guest.cat.hiking'), skiing: t('guest.cat.skiing'), sightseeing: t('guest.cat.sightseeing'), adventure: t('guest.cat.adventure') };
+                      const dL: Record<string, string> = { easy: t('guest.diff.easy'), medium: t('guest.diff.medium'), hard: t('guest.diff.hard') };
+                      const isSelected = selectedActivity === a.id;
+                      return (
+                        <div key={a.id}
+                          onClick={() => { setSelectedActivity(isSelected ? null : a.id); if (!isSelected) fetch('/api/activities/view', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ activity_id: a.id, activity_title: a.title, category: a.category }) }).catch(() => {}); }}
+                          style={{ background: isSelected ? 'var(--night)' : '#fff', borderRadius: 12, padding: '1rem 1.1rem', border: `1.5px solid ${isSelected ? 'var(--night)' : 'var(--line)'}`, cursor: 'pointer', transition: 'all .22s var(--ease)', boxShadow: isSelected ? '0 8px 32px rgba(14,28,46,.22)' : 'var(--shadow-sm)' }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '.75rem' }}>
+                            <div style={{ width: 38, height: 38, borderRadius: 10, background: isSelected ? 'rgba(255,255,255,.12)' : aC[a.category] + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', flexShrink: 0 }}>
+                              {aI[a.category]}
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontWeight: 700, fontSize: '.88rem', color: isSelected ? '#fff' : 'var(--text)', marginBottom: '.2rem', lineHeight: 1.3 }}>{a.title}</div>
+                              <div style={{ fontSize: '.75rem', color: isSelected ? 'rgba(255,255,255,.55)' : 'var(--sub)', lineHeight: 1.5, marginBottom: '.5rem' }}>{a.description}</div>
+                              <div style={{ display: 'flex', gap: '.35rem', flexWrap: 'wrap' }}>
+                                <span style={{ background: aC[a.category], color: '#fff', padding: '.12rem .45rem', borderRadius: 20, fontSize: '.62rem', fontWeight: 700 }}>{aL[a.category]}</span>
+                                {a.difficulty && <span style={{ background: isSelected ? 'rgba(255,255,255,.12)' : 'var(--sand)', color: isSelected ? 'rgba(255,255,255,.65)' : 'var(--sub)', padding: '.12rem .45rem', borderRadius: 20, fontSize: '.62rem', fontWeight: 600 }}>{dL[a.difficulty]}</span>}
+                                <span style={{ background: isSelected ? 'rgba(255,255,255,.12)' : 'var(--sand)', color: isSelected ? 'rgba(255,255,255,.65)' : 'var(--sub)', padding: '.12rem .45rem', borderRadius: 20, fontSize: '.62rem', fontWeight: 600 }}>⏱ {a.duration}</span>
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
-            </div>
-            <div style={{ height: 520, borderRadius: 14, overflow: 'hidden', boxShadow: 'var(--shadow-md)', position: 'sticky', top: 80 }}>
-              <ActivityMap activities={activityFilter === 'all' ? ACTIVITIES : ACTIVITIES.filter(a => a.category === activityFilter)} selected={selectedActivity} />
-            </div>
-          </div>
+                  <div style={{ height: 520, borderRadius: 14, overflow: 'hidden', boxShadow: 'var(--shadow-md)', position: 'sticky', top: 80 }}>
+                    <ActivityMap activities={filteredActivities} selected={selectedActivity} />
+                  </div>
+                </div>
+              </>
+            );
+          })()}
         </section>
 
         {/* Transactions */}
@@ -455,7 +499,7 @@ export default function GuestPage() {
           </div>
           <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--line)' }}>
             <div style={{ fontSize: '.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--sub)', marginBottom: '.9rem' }}>{t('guest.myCard')}</div>
-            <div onClick={() => setCardFlipped(f => !f)} style={{ perspective: 1100, height: 190, cursor: 'pointer', userSelect: 'none' }}>
+            <div className="guest-card-wrap" onClick={() => setCardFlipped(f => !f)} style={{ perspective: 1100, height: 190, cursor: 'pointer', userSelect: 'none' }}>
               <div style={{ position: 'relative', width: '100%', height: '100%', transition: 'transform .68s cubic-bezier(.4,0,.2,1)', transformStyle: 'preserve-3d', transform: cardFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}>
                 <div style={{ position: 'absolute', inset: 0, borderRadius: 16, overflow: 'hidden', backfaceVisibility: 'hidden', boxShadow: '0 10px 40px rgba(14,28,46,.32)', background: 'var(--navy)' }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -487,7 +531,6 @@ export default function GuestPage() {
                 </div>
               </div>
             </div>
-            <div style={{ textAlign: 'center', fontSize: '.7rem', color: 'var(--sub)', marginTop: '.55rem', letterSpacing: '.05em' }}>{t('guest.tapToFlip')}</div>
           </div>
           <div style={{ padding: '1.5rem' }}>
             <div style={{ fontSize: '.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--sub)', marginBottom: '.75rem' }}>{t('guest.recentActivity')}</div>
