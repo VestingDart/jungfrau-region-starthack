@@ -645,6 +645,43 @@ def admin_reseed():
 
 # ---- Bootstrap --------------------------------------------------------------
 
+@app.route("/api/activities/view", methods=["POST"])
+def track_activity_view():
+    body = request.get_json(force=True)
+    activity_id = body.get("activity_id", "").strip()
+    activity_title = body.get("activity_title", "").strip()
+    category = body.get("category", "").strip()
+    if not activity_id or not activity_title:
+        abort(400, description="activity_id and activity_title are required")
+    conn = db.get_connection()
+    try:
+        conn.execute(
+            "INSERT INTO activity_views (id, activity_id, activity_title, category, viewed_at) VALUES (?, ?, ?, ?, ?)",
+            (db.new_id(), activity_id, activity_title, category, db.utcnow_iso()),
+        )
+        return jsonify({"ok": True})
+    finally:
+        conn.close()
+
+
+@app.route("/api/admin/activities/stats", methods=["GET"])
+def admin_activity_stats():
+    _require_admin()
+    conn = db.get_connection()
+    try:
+        rows = conn.execute(
+            """SELECT activity_id, activity_title, category,
+                      COUNT(*) AS views,
+                      MAX(viewed_at) AS last_viewed
+               FROM activity_views
+               GROUP BY activity_id
+               ORDER BY views DESC"""
+        ).fetchall()
+        return jsonify({"stats": [dict(r) for r in rows]})
+    finally:
+        conn.close()
+
+
 @app.route("/api/health")
 def health():
     return jsonify({"ok": True, "now": db.utcnow_iso()})

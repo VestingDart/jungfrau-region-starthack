@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { getSession, clearSession } from '@/lib/auth';
 import type { Session } from '@/lib/auth';
+import LangToggle from '@/components/LangToggle';
+import { useLanguage } from '@/lib/language';
 
 interface Offer {
   id: string;
@@ -48,6 +50,7 @@ function offerImg(title: string, hint: string | null) {
 
 export default function PartnerPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [authChecking, setAuthChecking] = useState(true);
   const [session, setSession] = useState<Session | null>(null);
   const [partnerKey, setPartnerKey] = useState('');
@@ -93,7 +96,7 @@ export default function PartnerPage() {
       const d = await apiFetch('/api/partner/dashboard', {}, key) as unknown as Dashboard;
       setDashboard(d);
     } catch (e: unknown) {
-      showToast('Dashboard failed: ' + (e as Error).message);
+      showToast(t('common.error') + ': ' + (e as Error).message);
     }
   }
 
@@ -102,45 +105,45 @@ export default function PartnerPage() {
       const d = await apiFetch('/api/partner/offers', {}, key) as unknown as { offers: Offer[] };
       setOffers(d.offers || []);
     } catch (e: unknown) {
-      showToast('Offers failed: ' + (e as Error).message);
+      showToast(t('common.error') + ': ' + (e as Error).message);
     }
   }
 
   async function redeem() {
     const token = qrInput.trim();
-    if (!token) return showToast('Paste a QR token first');
+    if (!token) return showToast(t('partner.pasteFirst'));
     try {
       const r = await apiFetch('/api/redeem', {
         method: 'POST',
         headers: { 'Idempotency-Key': 'redeem-' + Date.now() + '-' + Math.random() },
         body: JSON.stringify({ qr_token: token }),
       }) as { message: string; redemption_id: string };
-      setRedeemResult({ ok: true, msg: 'Approved: ' + r.message, sub: 'Redemption ID: ' + r.redemption_id });
+      setRedeemResult({ ok: true, msg: t('partner.redeemApproved') + r.message, sub: t('partner.redemptionId') + r.redemption_id });
       setQrInput('');
       loadDashboard();
     } catch (e: unknown) {
-      setRedeemResult({ ok: false, msg: 'Rejected', sub: (e as Error).message });
+      setRedeemResult({ ok: false, msg: t('partner.redeemRejected'), sub: (e as Error).message });
     }
   }
 
   async function refund(id: string) {
-    if (!confirm('Reverse this redemption?')) return;
+    if (!confirm(t('partner.confirmReverse'))) return;
     try {
       await apiFetch('/api/partner/refund', {
         method: 'POST',
         headers: { 'Idempotency-Key': 'refund-' + Date.now() },
         body: JSON.stringify({ redemption_id: id, reason: 'manual refund (demo)' }),
       });
-      showToast('Refunded');
+      showToast(t('partner.refunded'));
       loadDashboard();
     } catch (e: unknown) {
-      showToast('Refund failed: ' + (e as Error).message);
+      showToast(t('common.error') + ': ' + (e as Error).message);
     }
   }
 
   async function addOffer() {
     const title = newTitle.trim();
-    if (!title) return showToast('Title is required');
+    if (!title) return showToast(t('partner.titleRequired'));
     const price = parseFloat(newPrice) || 0;
     const orig = parseFloat(newOrigPrice) || null;
     const desc = newDesc.trim() || null;
@@ -150,22 +153,22 @@ export default function PartnerPage() {
         method: 'POST',
         body: JSON.stringify({ title, type: newType, price_chf: price, original_price_chf: orig, description: desc, image_hint: hint }),
       });
-      showToast('Offer added');
+      showToast(t('partner.offerAdded'));
       setNewTitle(''); setNewPrice(''); setNewOrigPrice(''); setNewDesc(''); setNewHint('');
       loadOffers();
     } catch (e: unknown) {
-      showToast('Failed: ' + (e as Error).message);
+      showToast(t('common.error') + ': ' + (e as Error).message);
     }
   }
 
   async function removeOffer(id: string) {
-    if (!confirm('Remove this offer? Guests will no longer see it.')) return;
+    if (!confirm(t('partner.confirmRemoveOffer'))) return;
     try {
       await apiFetch(`/api/partner/offers/${id}`, { method: 'DELETE' });
-      showToast('Offer removed');
+      showToast(t('partner.offerRemoved'));
       loadOffers();
     } catch (e: unknown) {
-      showToast('Failed: ' + (e as Error).message);
+      showToast(t('common.error') + ': ' + (e as Error).message);
     }
   }
 
@@ -185,6 +188,12 @@ export default function PartnerPage() {
 
   const inputStyle = { width: '100%', padding: '.62rem .85rem', border: '1.5px solid var(--line)', borderRadius: 9, fontSize: '.875rem', color: 'var(--text)', background: '#fff', fontFamily: 'inherit', transition: 'border-color .18s' };
   const labelStyle = { display: 'block' as const, fontSize: '.65rem', fontWeight: 700 as const, textTransform: 'uppercase' as const, letterSpacing: '.08em', color: 'var(--sub)', marginBottom: '.35rem' };
+
+  const stats = [
+    { key: 'pending', label: t('partner.pendingPayout'), chf: dashboard?.pending_chf ?? 0, count: dashboard?.pending_count ?? 0, accent: 'var(--danger)' },
+    { key: 'batched', label: t('partner.batched'),       chf: dashboard?.batched_chf ?? 0, count: dashboard?.batched_count ?? 0, accent: 'var(--gold)' },
+    { key: 'settled', label: t('partner.settled'),       chf: dashboard?.settled_chf ?? 0, count: dashboard?.settled_count ?? 0, accent: 'var(--pine)' },
+  ];
 
   return (
     <>
@@ -282,11 +291,12 @@ export default function PartnerPage() {
         <div className="nav-logo">Jungfrau<em style={{ color: 'var(--gold)' }}>.</em>Partner</div>
         <div className="nav-right">
           <span style={{ fontSize: '.82rem', color: 'rgba(255,255,255,.6)', fontWeight: 500 }}>{session?.name}</span>
+          <LangToggle dark />
           <button
             onClick={signOut}
             style={{ background: 'transparent', border: '1px solid rgba(255,255,255,.18)', color: 'rgba(255,255,255,.65)', padding: '.38rem .85rem', borderRadius: 8, fontSize: '.8rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
           >
-            Sign out
+            {t('common.signOut')}
           </button>
         </div>
       </nav>
@@ -299,24 +309,24 @@ export default function PartnerPage() {
         <div style={{ maxWidth: 680, margin: '0 auto', position: 'relative', zIndex: 2, animation: 'fadeUp .6s var(--ease) both' }}>
 
           <span style={{ display: 'inline-block', background: 'var(--gold)', color: '#fff', padding: '.22rem .9rem', borderRadius: 24, fontSize: '.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.16em', marginBottom: '1.1rem', boxShadow: '0 3px 18px rgba(196,149,14,.45)' }}>
-            Partner Console
+            {t('partner.consoleLabel')}
           </span>
           <h1 style={{ fontSize: 'clamp(1.8rem,3.5vw,2.7rem)', fontWeight: 900, color: '#fff', letterSpacing: '-.035em', lineHeight: 1.05, marginBottom: '.5rem' }}>
-            Scan &amp; Redeem
+            {t('partner.heroTitle')}
           </h1>
           <p style={{ color: 'rgba(255,255,255,.52)', fontSize: '.92rem', lineHeight: 1.72, marginBottom: '2rem' }}>
-            Paste a guest QR token or open the scanner to approve a redemption instantly.
+            {t('partner.heroDesc')}
           </p>
 
           {/* Token input */}
           <div className="token-box" style={{ background: 'rgba(255,255,255,.05)', border: '1.5px solid rgba(255,255,255,.1)', borderRadius: 14, overflow: 'hidden', marginBottom: '.9rem', transition: 'border-color .18s, box-shadow .18s' }}>
             <div style={{ padding: '.55rem 1rem', borderBottom: '1px solid rgba(255,255,255,.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,.03)' }}>
-              <span style={{ fontSize: '.6rem', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '.12em', color: 'rgba(255,255,255,.38)' }}>Guest Token</span>
+              <span style={{ fontSize: '.6rem', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '.12em', color: 'rgba(255,255,255,.38)' }}>{t('partner.tokenLabel')}</span>
               <button
-                onClick={() => navigator.clipboard.readText().then(t => setQrInput(t)).catch(() => showToast('Clipboard access denied'))}
+                onClick={() => navigator.clipboard.readText().then(txt => setQrInput(txt)).catch(() => showToast(t('partner.clipboardDenied')))}
                 style={{ background: 'rgba(196,149,14,.14)', border: '1px solid rgba(196,149,14,.28)', color: 'var(--gold)', padding: '.2rem .65rem', borderRadius: 6, fontSize: '.65rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '.04em' }}
               >
-                Paste
+                {t('common.paste')}
               </button>
             </div>
             <input
@@ -334,13 +344,13 @@ export default function PartnerPage() {
 
           <div style={{ display: 'flex', gap: '.65rem', flexWrap: 'wrap' as const }}>
             <button className="redeem-btn" onClick={redeem} style={{ background: 'var(--pine)', color: '#fff', border: 'none', padding: '.75rem 1.85rem', borderRadius: 9, fontWeight: 800, fontSize: '.9rem', cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 18px rgba(61,114,82,.38)' }}>
-              Redeem
+              {t('partner.redeemBtn')}
             </button>
             <button className="scan-btn" onClick={() => setShowScanner(true)} style={{ background: 'rgba(196,149,14,.12)', color: 'var(--gold)', border: '1px solid rgba(196,149,14,.28)', padding: '.75rem 1.25rem', borderRadius: 9, fontWeight: 700, fontSize: '.875rem', cursor: 'pointer', fontFamily: 'inherit' }}>
-              Scan QR
+              {t('partner.scanQr')}
             </button>
             <button onClick={() => { setQrInput(''); setRedeemResult(null); }} style={{ background: 'rgba(255,255,255,.06)', color: 'rgba(255,255,255,.62)', border: '1px solid rgba(255,255,255,.12)', padding: '.75rem 1.1rem', borderRadius: 9, fontWeight: 600, fontSize: '.875rem', cursor: 'pointer', fontFamily: 'inherit' }}>
-              Clear
+              {t('common.clear')}
             </button>
           </div>
 
@@ -361,15 +371,13 @@ export default function PartnerPage() {
       {/* ── Stats bar ── */}
       <div style={{ background: '#F2EFE8', padding: '0 2rem 2.75rem' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '1rem' }}>
-          {[
-            { key: 'pending', label: 'Pending Payout', chf: dashboard?.pending_chf ?? 0, count: dashboard?.pending_count ?? 0, accent: 'var(--danger)' },
-            { key: 'batched', label: 'Batched', chf: dashboard?.batched_chf ?? 0, count: dashboard?.batched_count ?? 0, accent: 'var(--gold)' },
-            { key: 'settled', label: 'Settled', chf: dashboard?.settled_chf ?? 0, count: dashboard?.settled_count ?? 0, accent: 'var(--pine)' },
-          ].map((s, i) => (
+          {stats.map((s, i) => (
             <div key={s.key} className="stat-card" style={{ background: '#fff', borderRadius: 16, padding: '1.35rem 1.5rem', boxShadow: '0 2px 16px rgba(14,28,46,.07)', borderTop: `3px solid ${s.accent}`, animation: 'rise .5s var(--ease) both', animationDelay: `${i * .08}s` }}>
               <div style={{ fontSize: '.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--sub)' }}>{s.label}</div>
               <div style={{ fontSize: '1.55rem', fontWeight: 900, letterSpacing: '-.03em', color: s.accent, marginTop: '.3rem', lineHeight: 1 }}>CHF {s.chf.toFixed(2)}</div>
-              <div style={{ fontSize: '.72rem', color: 'var(--sub)', marginTop: '.3rem' }}>{s.count} redemption{s.count !== 1 ? 's' : ''}</div>
+              <div style={{ fontSize: '.72rem', color: 'var(--sub)', marginTop: '.3rem' }}>
+                {s.count} {s.count !== 1 ? t('partner.redemptionCountP') : t('partner.redemptionCount')}
+              </div>
             </div>
           ))}
         </div>
@@ -382,21 +390,23 @@ export default function PartnerPage() {
         <section style={{ marginBottom: '3.5rem' }}>
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1.25rem', marginBottom: '2rem' }}>
             <div style={{ flexShrink: 0 }}>
-              <div style={{ fontSize: '.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.15em', color: 'var(--gold)', marginBottom: '.35rem' }}>Active listing</div>
-              <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--night)', letterSpacing: '-.03em', lineHeight: 1 }}>My Offers</h2>
+              <div style={{ fontSize: '.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.15em', color: 'var(--gold)', marginBottom: '.35rem' }}>{t('partner.activeListing')}</div>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--night)', letterSpacing: '-.03em', lineHeight: 1 }}>{t('partner.myOffers')}</h2>
             </div>
             <div style={{ flex: 1, height: 1, background: 'var(--line)', marginBottom: '.75rem' }} />
-            <button onClick={() => loadOffers()} style={{ background: 'transparent', border: '1px solid var(--line)', color: 'var(--sub)', padding: '.32rem .75rem', borderRadius: 7, fontSize: '.72rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', marginBottom: '.75rem', flexShrink: 0 }}>Refresh</button>
+            <button onClick={() => loadOffers()} style={{ background: 'transparent', border: '1px solid var(--line)', color: 'var(--sub)', padding: '.32rem .75rem', borderRadius: 7, fontSize: '.72rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', marginBottom: '.75rem', flexShrink: 0 }}>{t('common.refresh')}</button>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: '1.4rem', marginBottom: '2.5rem' }}>
             {offers.length === 0
-              ? <p style={{ color: 'var(--sub)', fontSize: '.875rem', padding: '1rem 0' }}>No offers added yet.</p>
+              ? <p style={{ color: 'var(--sub)', fontSize: '.875rem', padding: '1rem 0' }}>{t('partner.noOffers')}</p>
               : offers.map((o, i) => {
                 const payout = (o.partner_payout_rappen / 100).toFixed(2);
                 const orig = o.original_price_rappen;
                 const disc = orig && orig > o.partner_payout_rappen ? Math.round((1 - o.partner_payout_rappen / orig) * 100) : 0;
                 const accentColor = o.status === 'active' ? 'var(--pine)' : o.status === 'pending' ? 'var(--gold)' : 'var(--danger)';
+                const typeLabel = o.type === 'entitlement' ? t('partner.typeIncluded') : t('partner.typeWallet');
+                const statusLabel = o.status === 'active' ? t('partner.statusActive') : o.status === 'pending' ? t('partner.statusPending') : t('partner.statusRejected');
                 return (
                   <div key={o.id} className="offer-card" style={{ background: 'var(--white)', borderRadius: 'var(--r)', overflow: 'hidden', boxShadow: 'var(--shadow-sm)', animation: 'rise .5s var(--ease) both', animationDelay: `${i * .07}s`, display: 'flex', flexDirection: 'column' }}>
                     <div style={{ position: 'relative', height: 175, overflow: 'hidden', background: 'var(--sand)' }}>
@@ -404,10 +414,10 @@ export default function PartnerPage() {
                       <img src={offerImg(o.title, o.image_hint)} alt={esc(o.title)} loading="lazy" className="card-img" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(14,28,46,.3) 0%, transparent 55%)' }} />
                       <span style={{ position: 'absolute', top: '.7rem', left: '.7rem', background: 'rgba(14,28,46,.7)', backdropFilter: 'blur(6px)', color: '#fff', padding: '.2rem .62rem', borderRadius: 20, fontSize: '.58rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.08em' }}>
-                        {o.type === 'entitlement' ? 'Included' : 'Wallet'}
+                        {typeLabel}
                       </span>
                       <span style={{ position: 'absolute', top: '.7rem', right: '.7rem', background: accentColor, color: '#fff', padding: '.2rem .62rem', borderRadius: 20, fontSize: '.58rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.08em' }}>
-                        {o.status === 'active' ? 'Active' : o.status === 'pending' ? 'Pending' : 'Rejected'}
+                        {statusLabel}
                       </span>
                     </div>
                     <div style={{ padding: '1.1rem 1.2rem 1.3rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
@@ -416,11 +426,11 @@ export default function PartnerPage() {
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '.75rem', borderTop: '1px solid var(--line)' }}>
                         <div style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--navy)', letterSpacing: '-.01em' }}>
                           CHF {payout}
-                          {disc ? <span style={{ fontSize: '.68rem', fontWeight: 500, color: 'var(--sub)' }}>&nbsp;· {disc}% off</span> : null}
+                          {disc ? <span style={{ fontSize: '.68rem', fontWeight: 500, color: 'var(--sub)' }}>&nbsp;· {disc}{t('partner.offPct')}</span> : null}
                         </div>
                         {o.status !== 'pending' && (
                           <button className="remove-btn" onClick={() => removeOffer(o.id)} style={{ background: 'transparent', color: 'var(--danger)', border: '1px solid rgba(197,32,46,.25)', padding: '.28rem .7rem', borderRadius: 6, fontSize: '.7rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'background .15s' }}>
-                            Remove
+                            {t('common.remove')}
                           </button>
                         )}
                       </div>
@@ -434,41 +444,41 @@ export default function PartnerPage() {
           {/* Add New Offer */}
           <div style={{ background: 'var(--white)', borderRadius: 'var(--r)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
             <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--line)', background: 'var(--night)' }}>
-              <div style={{ fontSize: '.58rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.14em', color: 'rgba(255,255,255,.38)', marginBottom: '.15rem' }}>Listing</div>
-              <h2 style={{ fontSize: '.9rem', fontWeight: 700, color: '#fff' }}>Add New Offer</h2>
+              <div style={{ fontSize: '.58rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.14em', color: 'rgba(255,255,255,.38)', marginBottom: '.15rem' }}>{t('partner.activeListing')}</div>
+              <h2 style={{ fontSize: '.9rem', fontWeight: 700, color: '#fff' }}>{t('partner.addOfferTitle')}</h2>
             </div>
             <div style={{ padding: '1.5rem' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.75rem' }}>
                 <div>
-                  <label style={labelStyle}>Title</label>
+                  <label style={labelStyle}>{t('partner.offerTitle')}</label>
                   <input className="form-input" style={inputStyle} value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="e.g. Paragliding adventure" />
                 </div>
                 <div>
-                  <label style={labelStyle}>Type</label>
+                  <label style={labelStyle}>{t('partner.offerType')}</label>
                   <select className="form-input" style={inputStyle} value={newType} onChange={e => setNewType(e.target.value)}>
-                    <option value="priced">Priced (wallet spend)</option>
-                    <option value="entitlement">Entitlement (free / included)</option>
+                    <option value="priced">{t('partner.offerTypePriced')}</option>
+                    <option value="entitlement">{t('partner.offerTypeEntitle')}</option>
                   </select>
                 </div>
                 <div>
-                  <label style={labelStyle}>Price (CHF)</label>
+                  <label style={labelStyle}>{t('partner.offerPrice')}</label>
                   <input className="form-input" style={inputStyle} type="number" min="0" step="0.5" value={newPrice} onChange={e => setNewPrice(e.target.value)} placeholder="e.g. 95.00" />
                 </div>
                 <div>
-                  <label style={labelStyle}>Original price (CHF, optional)</label>
+                  <label style={labelStyle}>{t('partner.offerOrigPrice')}</label>
                   <input className="form-input" style={inputStyle} type="number" min="0" step="0.5" value={newOrigPrice} onChange={e => setNewOrigPrice(e.target.value)} placeholder="e.g. 115.00" />
                 </div>
                 <div style={{ gridColumn: '1/-1' }}>
-                  <label style={labelStyle}>Description</label>
+                  <label style={labelStyle}>{t('partner.offerDesc')}</label>
                   <textarea className="form-input" style={{ ...inputStyle, resize: 'none', height: 68 }} value={newDesc} onChange={e => setNewDesc(e.target.value)} placeholder="Short description guests will see on the offer card…" />
                 </div>
                 <div>
-                  <label style={labelStyle}>Image hint (optional)</label>
+                  <label style={labelStyle}>{t('partner.offerImgHint')}</label>
                   <input className="form-input" style={inputStyle} value={newHint} onChange={e => setNewHint(e.target.value)} placeholder="e.g. paragliding-alps" />
                 </div>
                 <div style={{ display: 'flex', alignItems: 'flex-end' }}>
                   <button onClick={addOffer} style={{ background: 'var(--navy)', color: '#fff', border: 'none', padding: '.7rem 1.5rem', borderRadius: 9, fontWeight: 700, fontSize: '.875rem', cursor: 'pointer', fontFamily: 'inherit' }}>
-                    Add offer
+                    {t('partner.addOfferBtn')}
                   </button>
                 </div>
               </div>
@@ -481,17 +491,17 @@ export default function PartnerPage() {
           <div style={{ background: 'var(--white)', borderRadius: 'var(--r)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
             <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--night)' }}>
               <div>
-                <div style={{ fontSize: '.58rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.14em', color: 'rgba(255,255,255,.38)', marginBottom: '.15rem' }}>Activity</div>
-                <h2 style={{ fontSize: '.9rem', fontWeight: 700, color: '#fff' }}>Recent Redemptions</h2>
+                <div style={{ fontSize: '.58rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.14em', color: 'rgba(255,255,255,.38)', marginBottom: '.15rem' }}>{t('partner.activity')}</div>
+                <h2 style={{ fontSize: '.9rem', fontWeight: 700, color: '#fff' }}>{t('partner.recentRedemptions')}</h2>
               </div>
-              <button onClick={() => loadDashboard()} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,.14)', color: 'rgba(255,255,255,.52)', padding: '.32rem .75rem', borderRadius: 7, fontSize: '.72rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Refresh</button>
+              <button onClick={() => loadDashboard()} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,.14)', color: 'rgba(255,255,255,.52)', padding: '.32rem .75rem', borderRadius: 7, fontSize: '.72rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{t('common.refresh')}</button>
             </div>
             <div style={{ padding: '.35rem 1.5rem' }}>
               {!dashboard?.recent_redemptions?.length
-                ? <div style={{ textAlign: 'center', padding: '2.5rem 1rem', color: 'var(--sub)', fontSize: '.875rem' }}>No redemptions yet</div>
+                ? <div style={{ textAlign: 'center', padding: '2.5rem 1rem', color: 'var(--sub)', fontSize: '.875rem' }}>{t('partner.noRedemptions')}</div>
                 : dashboard.recent_redemptions.map(r => {
                   const status = r.reversed ? 'reversed' : (r.settlement_status || 'pending');
-                  const date = new Date(r.created_at).toLocaleString('en-CH', { dateStyle: 'short', timeStyle: 'short' });
+                  const date = new Date(r.created_at).toLocaleString('de-CH', { dateStyle: 'short', timeStyle: 'short' });
                   const chf = (r.amount_rappen / 100).toFixed(2);
                   const canRefund = !r.reversed && status === 'pending';
                   return (
@@ -503,7 +513,7 @@ export default function PartnerPage() {
                       <span className={`pill pill-${status}`}>{status}</span>
                       {canRefund && (
                         <button className="remove-btn" onClick={() => refund(r.id)} style={{ background: 'transparent', color: 'var(--danger)', border: '1px solid rgba(197,32,46,.25)', padding: '.25rem .65rem', borderRadius: 6, fontSize: '.7rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0, transition: 'background .15s' }}>
-                          Refund
+                          {t('partner.refund')}
                         </button>
                       )}
                     </div>
@@ -521,8 +531,8 @@ export default function PartnerPage() {
           <div className="qr-modal-card" onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
               <div>
-                <div style={{ fontSize: '.55rem', fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '.14em', color: 'rgba(255,255,255,.32)', marginBottom: '.2rem' }}>Guest QR</div>
-                <div style={{ fontSize: '1rem', fontWeight: 800, color: '#fff' }}>Scan Code</div>
+                <div style={{ fontSize: '.55rem', fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '.14em', color: 'rgba(255,255,255,.32)', marginBottom: '.2rem' }}>{t('partner.tokenLabel')}</div>
+                <div style={{ fontSize: '1rem', fontWeight: 800, color: '#fff' }}>{t('partner.scanTitle')}</div>
               </div>
               <button
                 className="close-btn"
@@ -544,8 +554,8 @@ export default function PartnerPage() {
                 ))}
               </div>
             </div>
-            <p style={{ textAlign: 'center', color: 'rgba(255,255,255,.32)', fontSize: '.72rem', marginTop: '1.25rem', lineHeight: 1.65, margin: '1.25rem 0 0' }}>
-              Point the guest&apos;s phone at the scanner.<br />Token will populate automatically.
+            <p style={{ textAlign: 'center', color: 'rgba(255,255,255,.32)', fontSize: '.72rem', marginTop: '1.25rem', lineHeight: 1.65, margin: '1.25rem 0 0', whiteSpace: 'pre-line' }}>
+              {t('partner.scanHint')}
             </p>
           </div>
         </div>

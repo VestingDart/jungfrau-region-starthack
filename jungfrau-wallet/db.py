@@ -190,6 +190,15 @@ CREATE TABLE IF NOT EXISTS settlement_batches (
     confirmed_at        TEXT
 );
 
+CREATE TABLE IF NOT EXISTS activity_views (
+    id           TEXT PRIMARY KEY,
+    activity_id  TEXT NOT NULL,
+    activity_title TEXT NOT NULL,
+    category     TEXT NOT NULL,
+    viewed_at    TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_activity_views_id ON activity_views(activity_id);
+
 CREATE TABLE IF NOT EXISTS merchant_ledger (
     id              TEXT PRIMARY KEY,
     partner_id      TEXT NOT NULL REFERENCES partners(id),
@@ -215,6 +224,8 @@ def init_db():
             "ALTER TABLE offers ADD COLUMN original_price_rappen INTEGER",
             "ALTER TABLE offers ADD COLUMN image_hint TEXT",
             "ALTER TABLE offers ADD COLUMN status TEXT NOT NULL DEFAULT 'active'",
+            "CREATE TABLE IF NOT EXISTS activity_views (id TEXT PRIMARY KEY, activity_id TEXT NOT NULL, activity_title TEXT NOT NULL, category TEXT NOT NULL, viewed_at TEXT NOT NULL)",
+            "CREATE INDEX IF NOT EXISTS ix_activity_views_id ON activity_views(activity_id)",
         ):
             try:
                 conn.execute(stmt)
